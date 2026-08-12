@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Web Walkie-Talkie (実用WEBトランシーバー)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Active transmission highlight */
+        .transmitting-active {
+            background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%) !important;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-3 sm:p-6">
+
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col justify-between min-h-[600px] relative overflow-hidden">
+        
+        <!-- HEADER SECTION -->
+        <div>
+            <!-- Title Bar -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <div id="connectionLed" class="w-3 h-3 rounded-full bg-slate-600"></div>
+                    <span class="font-black text-sm tracking-widest text-slate-200">実用WEBトランシーバー</span>
+                </div>
+                <span id="myPeerIdDisplay" class="text-[11px] font-mono text-slate-400">ID: ----</span>
+            </div>
+
+            <!-- CHANNEL SELECTOR SECTION -->
+            <div id="channelBox" class="mt-4 bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+                <div id="joinSection" class="flex flex-col gap-2">
+                    <label for="channelSelect" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex justify-between">
+                        <span>チャンネル選択 (CH1〜15)</span>
+                        <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt text-xs"></i> 即時切替対応</span>
+                    </label>
+                    <div class="flex gap-1.5 items-center">
+                        <button onclick="app.stepChannel(-1)" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-slate-700 transition">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <select id="channelSelect" onchange="app.onChannelSelectChange()" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 h-10 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500 cursor-pointer">
+                            <option value="CH01" selected>CH1 (呼び出し)</option>
+                            <option value="CH02">CH2</option>
+                            <option value="CH03">CH3</option>
+                            <option value="CH04">CH4</option>
+                            <option value="CH05">CH5</option>
+                            <option value="CH06">CH6</option>
+                            <option value="CH07">CH7</option>
+                            <option value="CH08">CH8</option>
+                            <option value="CH09">CH9</option>
+                            <option value="CH10">CH10</option>
+                            <option value="CH11">CH11</option>
+                            <option value="CH12">CH12</option>
+                            <option value="CH13">CH13</option>
+                            <option value="CH14">CH14</option>
+                            <option value="CH15">CH15</option>
+                        </select>
+                        <button onclick="app.stepChannel(1)" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-slate-700 transition">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                        <button id="joinBtn" onclick="app.joinChannel()" class="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black h-10 px-4 rounded-xl text-xs transition flex items-center gap-1 shrink-0 shadow-lg ml-1">
+                            <i class="fa-solid fa-plug"></i> 接続
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Channel Display Bar -->
+                <div id="activeSection" class="hidden flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">現在のチャンネル</div>
+                        <div class="text-lg font-black text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-tower-cell text-sm"></i>
+                            <span id="currentChannelName">CH1 (呼び出し)</span>
+                        </div>
+                    </div>
+                    <button onclick="app.leaveChannel(false)" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 text-xs px-3.5 py-2 rounded-xl font-bold border border-rose-800 transition">
+                        <i class="fa-solid fa-power-off mr-1"></i> 切断
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="my-6 flex flex-col items-center justify-center flex-1">
+            
+            <!-- Voice Activity / Member Status Badge -->
+            <div id="statusDisplay" class="mb-5 text-center min-h-[36px] flex flex-col items-center justify-center">
+                <div id="statusBadge" class="px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-bold text-slate-400 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    <span>未接続 (チャンネルを選択して接続してください)</span>
+                </div>
+            </div>
+
+            <!-- BIG PTT (PUSH TO TALK) BUTTON -->
+            <div class="relative flex items-center justify-center my-2">
+                <button id="pttBtn" disabled
+                    class="w-48 h-48 rounded-full bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-700 shadow-2xl flex flex-col items-center justify-center text-slate-500 font-black tracking-wider transition-all duration-100 cursor-not-allowed opacity-50 select-none">
+                    <i class="fa-solid fa-microphone text-4xl mb-2"></i>
+                    <span class="text-base tracking-widest">PUSH TO TALK</span>
+                    <span id="pttSubText" class="text-[10px] font-normal text-slate-400 mt-1">押している間だけ話せます</span>
+                </button>
+            </div>
+
+            <!-- Key Guide -->
+            <div class="mt-4 text-center">
+                <span class="text-[11px] text-slate-400 flex items-center justify-center gap-1">
+                    <kbd class="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">SPACE</kbd>
+                    キー長押しでも送信可能
+                </span>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-2 px-1">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-amber-500"></i> オンラインメンバー (<span id="memberCount">0</span>人)
+                </span>
+            </div>
+
+            <div id="memberList" class="bg-slate-950/90 border border-slate-800 rounded-2xl p-2.5 min-h-[70px] max-h-[110px] overflow-y-auto flex flex-wrap gap-2 items-start">
+                <div class="text-xs text-slate-500 p-2 italic w-full text-center">チャンネルに接続すると参加者が表示されます</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Hidden Audio Container for WebRTC Streams -->
+    <div id="remoteAudioContainer" class="hidden"></div>
+
+    <script>
+        class WebWalkieTalkie {
+            constructor() {
+                this.myId = '';
+                this.selectedChannel = 'CH01';
+                this.localStream = null;
+                this.isTransmitting = false;
+                this.isConnected = false;
+
+                // WebRTC and State
+                this.peerConnections = {}; // peerId -> RTCPeerConnection
+                this.dataChannels = {};    // peerId -> RTCDataChannel
+                this.members = new Map();  // peerId -> memberInfo
+                
+                // Supabase HTTP REST config (No WebSockets)
+                this.SUPABASE_URL = 'https://qfzyrogwyjbzbblnvqzy.supabase.co';
+                this.SUPABASE_KEY = 'sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw';
+                
+                this.broadcastChannel = null;
+                this.pollingInterval = null;
+
+                this.rtcConfig = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                };
+
+                this.initUI();
+            }
+
+            initUI() {
+                const pttBtn = document.getElementById('pttBtn');
+
+                const startTx = (e) => {
+                    e.preventDefault();
+                    this.startTransmit();
+                };
+                const stopTx = (e) => {
+                    e.preventDefault();
+                    this.stopTransmit();
+                };
+
+                pttBtn.addEventListener('mousedown', startTx);
+                pttBtn.addEventListener('mouseup', stopTx);
+                pttBtn.addEventListener('mouseleave', stopTx);
+                pttBtn.addEventListener('touchstart', startTx, { passive: false });
+                pttBtn.addEventListener('touchend', stopTx, { passive: false });
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && !e.repeat && !this.isTransmitting && document.activeElement.tagName !== 'SELECT') {
+                        e.preventDefault();
+                        this.startTransmit();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    if (e.code === 'Space' && this.isTransmitting && document.activeElement.tagName !== 'SELECT') {
+                        e.preventDefault();
+                        this.stopTransmit();
+                    }
+                });
+
+                window.addEventListener('beforeunload', () => {
+                    this.leaveChannel(false);
+                });
+            }
+
+            async onChannelSelectChange() {
+                if (this.isConnected) {
+                    await this.switchChannel();
+                }
+            }
+
+            async stepChannel(delta) {
+                const selectEl = document.getElementById('channelSelect');
+                let newIndex = selectEl.selectedIndex + delta;
+                if (newIndex < 0) newIndex = selectEl.options.length - 1;
+                if (newIndex >= selectEl.options.length) newIndex = 0;
+
+                selectEl.selectedIndex = newIndex;
+                if (this.isConnected) {
+                    await this.switchChannel();
+                }
+            }
+
+            async switchChannel() {
+                // クリーンアップして即座に再接続
+                await this.leaveChannel(false);
+                await this.joinChannel();
+            }
+
+            async joinChannel() {
+                const selectEl = document.getElementById('channelSelect');
+                this.selectedChannel = selectEl.value;
+                const channelLabel = selectEl.options[selectEl.selectedIndex].text;
+
+                // 1. Get microphone access if not already granted
+                if (!this.localStream) {
+                    try {
+                        this.localStream = await navigator.mediaDevices.getUserMedia({
+                            audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true
+                            }
+                        });
+                    } catch (err) {
+                        this.updateStatusBadge('red', 'マイクへのアクセスを許可してください');
+                        return;
+                    }
+                }
+
+                // Mute tracks by default
+                this.localStream.getAudioTracks().forEach(track => track.enabled = false);
+
+                this.isConnected = true;
+                document.getElementById('joinBtn').disabled = true;
+                this.updateStatusBadge('yellow', '接続中...');
+
+                // 2. Generate Client ID for this channel session
+                const randomId = Math.random().toString(36).substring(2, 8);
+                this.myId = `wtlk-${this.selectedChannel}-${randomId}`;
+
+                document.getElementById('myPeerIdDisplay').innerText = `ID: ${randomId.toUpperCase()}`;
+                document.getElementById('joinSection').classList.add('hidden');
+                document.getElementById('activeSection').classList.remove('hidden');
+                document.getElementById('currentChannelName').innerText = channelLabel;
+
+                const pttBtn = document.getElementById('pttBtn');
+                pttBtn.disabled = false;
+                pttBtn.classList.remove('cursor-not-allowed', 'opacity-50');
+                pttBtn.classList.add('bg-gradient-to-b', 'from-emerald-600', 'to-emerald-800', 'border-emerald-500', 'text-white', 'hover:opacity-90');
+
+                document.getElementById('connectionLed').className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse';
+
+                this.updateStatusBadge('green', '待機中 (ボタンを押して送信)');
+
+                // Add self to member list
+                this.members.set(this.myId, { id: this.myId, isSelf: true, isTalking: false, lastActive: Date.now() });
+                this.renderMembers();
+
+                // BroadcastChannel for instant local multi-tab communication
+                if (typeof BroadcastChannel !== 'undefined') {
+                    this.broadcastChannel = new BroadcastChannel(`walkie_talkie_${this.selectedChannel}`);
+                    this.broadcastChannel.onmessage = (event) => this.handleSignal(event.data);
+                    
+                    // Announce presence locally
+                    this.sendSignal('ALL', { type: 'ANNOUNCE', peerId: this.myId });
+                }
+
+                // Start HTTP REST Signaling & Heartbeat
+                this.startHttpSignaling();
+            }
+
+            startHttpSignaling() {
+                this.pollingInterval = setInterval(() => {
+                    this.sendSignal('ALL', { type: 'HEARTBEAT', peerId: this.myId });
+                    this.cleanInactiveMembers();
+                }, 3000);
+            }
+
+            cleanInactiveMembers() {
+                const now = Date.now();
+                this.members.forEach((info, peerId) => {
+                    if (!info.isSelf && (now - info.lastActive) > 10000) {
+                        this.members.delete(peerId);
+                        if (this.peerConnections[peerId]) {
+                            this.peerConnections[peerId].close();
+                            delete this.peerConnections[peerId];
+                        }
+                        if (this.dataChannels[peerId]) {
+                            delete this.dataChannels[peerId];
+                        }
+                        this.renderMembers();
+                    }
+                });
+            }
+
+            sendSignal(toPeer, data) {
+                const signalPayload = {
+                    from: this.myId,
+                    to: toPeer,
+                    ...data,
+                    timestamp: Date.now()
+                };
+
+                if (this.broadcastChannel) {
+                    try {
+                        this.broadcastChannel.postMessage(signalPayload);
+                    } catch (e) {}
+                }
+
+                this.postSignalToSupabaseRest(signalPayload);
+            }
+
+            async postSignalToSupabaseRest(payload) {
+                try {
+                    await fetch(`${this.SUPABASE_URL}/rest/v1/rpc/broadcast_signal`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': this.SUPABASE_KEY,
+                            'Authorization': `Bearer ${this.SUPABASE_KEY}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (err) {}
+            }
+
+            async initiatePeerConnection(peerId) {
+                if (this.peerConnections[peerId]) return;
+
+                const pc = new RTCPeerConnection(this.rtcConfig);
+                this.peerConnections[peerId] = pc;
+
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => pc.addTrack(track, this.localStream));
+                }
+
+                const dc = pc.createDataChannel("ptt_channel");
+                this.setupDataChannel(peerId, dc);
+
+                pc.onicecandidate = (e) => {
+                    if (e.candidate) {
+                        this.sendSignal(peerId, { type: 'candidate', candidate: e.candidate.toJSON() });
+                    }
+                };
+
+                pc.ontrack = (e) => this.handleRemoteTrack(peerId, e.streams[0]);
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                await this.sendSignal(peerId, { type: 'offer', sdp: offer.sdp });
+            }
+
+            async handleSignal(signal) {
+                if (!signal || signal.from === this.myId) return;
+                if (signal.to && signal.to !== this.myId && signal.to !== 'ALL') return;
+
+                const fromPeer = signal.from;
+
+                if (!this.members.has(fromPeer)) {
+                    this.members.set(fromPeer, { id: fromPeer, isSelf: false, isTalking: false, lastActive: Date.now() });
+                    this.renderMembers();
+
+                    if (this.myId < fromPeer) {
+                        this.initiatePeerConnection(fromPeer);
+                    }
+                } else {
+                    this.members.get(fromPeer).lastActive = Date.now();
+                }
+
+                if (signal.type === 'ANNOUNCE' || signal.type === 'HEARTBEAT') {
+                    if (this.myId < fromPeer && !this.peerConnections[fromPeer]) {
+                        this.initiatePeerConnection(fromPeer);
+                    }
+                } else if (signal.type === 'offer') {
+                    let pc = this.peerConnections[fromPeer];
+                    if (pc) pc.close();
+
+                    pc = new RTCPeerConnection(this.rtcConfig);
+                    this.peerConnections[fromPeer] = pc;
+
+                    if (this.localStream) {
+                        this.localStream.getTracks().forEach(track => pc.addTrack(track, this.localStream));
+                    }
+
+                    pc.ondatachannel = (e) => this.setupDataChannel(fromPeer, e.channel);
+                    pc.onicecandidate = (e) => {
+                        if (e.candidate) {
+                            this.sendSignal(fromPeer, { type: 'candidate', candidate: e.candidate.toJSON() });
+                        }
+                    };
+                    pc.ontrack = (e) => this.handleRemoteTrack(fromPeer, e.streams[0]);
+
+                    await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.sdp }));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    await this.sendSignal(fromPeer, { type: 'answer', sdp: answer.sdp });
+
+                } else if (signal.type === 'answer') {
+                    const pc = this.peerConnections[fromPeer];
+                    if (pc && pc.signalingState !== 'stable') {
+                        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
+                    }
+
+                } else if (signal.type === 'candidate') {
+                    const pc = this.peerConnections[fromPeer];
+                    if (pc && signal.candidate) {
+                        try {
+                            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                        } catch (e) {}
+                    }
+                } else if (signal.type === 'PTT_STATE') {
+                    const shortId = fromPeer.split('-').pop().toUpperCase();
+                    if (signal.state === 'TX_START') {
+                        this.updateStatusBadge('red', `🔊 ${shortId} が送信中...`);
+                        this.setTalkingState(fromPeer, true);
+                    } else if (signal.state === 'TX_STOP') {
+                        this.updateStatusBadge('green', '待機中');
+                        this.setTalkingState(fromPeer, false);
+                    }
+                }
+            }
+
+            setupDataChannel(peerId, dc) {
+                this.dataChannels[peerId] = dc;
+
+                dc.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        const shortId = peerId.split('-').pop().toUpperCase();
+                        if (data.type === 'TX_START') {
+                            this.updateStatusBadge('red', `🔊 ${shortId} が送信中...`);
+                            this.setTalkingState(peerId, true);
+                        } else if (data.type === 'TX_STOP') {
+                            this.updateStatusBadge('green', '待機中');
+                            this.setTalkingState(peerId, false);
+                        }
+                    } catch (err) {}
+                };
+
+                dc.onclose = () => {
+                    delete this.dataChannels[peerId];
+                };
+            }
+
+            handleRemoteTrack(peerId, stream) {
+                let audioEl = document.getElementById(`audio-${peerId}`);
+                if (!audioEl) {
+                    audioEl = document.createElement('audio');
+                    audioEl.id = `audio-${peerId}`;
+                    audioEl.autoplay = true;
+                    document.getElementById('remoteAudioContainer').appendChild(audioEl);
+                }
+                audioEl.srcObject = stream;
+            }
+
+            startTransmit() {
+                if (!this.myId || this.isTransmitting || !this.isConnected) return;
+
+                this.isTransmitting = true;
+
+                if (this.localStream) {
+                    this.localStream.getAudioTracks().forEach(track => track.enabled = true);
+                }
+
+                const pttBtn = document.getElementById('pttBtn');
+                pttBtn.classList.add('transmitting-active');
+                document.getElementById('pttSubText').innerText = "🔴 送信中 (話してください)";
+
+                this.updateStatusBadge('red', '🔴 あなたが送信中 (TX)');
+                this.setTalkingState(this.myId, true);
+
+                this.broadcastPttState('TX_START');
+            }
+
+            stopTransmit() {
+                if (!this.isTransmitting) return;
+
+                this.isTransmitting = false;
+
+                if (this.localStream) {
+                    this.localStream.getAudioTracks().forEach(track => track.enabled = false);
+                }
+
+                const pttBtn = document.getElementById('pttBtn');
+                pttBtn.classList.remove('transmitting-active');
+                document.getElementById('pttSubText').innerText = "押している間だけ話せます";
+
+                this.updateStatusBadge('green', '待機中');
+                this.setTalkingState(this.myId, false);
+
+                this.broadcastPttState('TX_STOP');
+            }
+
+            broadcastPttState(type) {
+                const payload = { type, from: this.myId };
+
+                Object.values(this.dataChannels).forEach(dc => {
+                    if (dc.readyState === 'open') {
+                        dc.send(JSON.stringify(payload));
+                    }
+                });
+
+                this.sendSignal('ALL', { type: 'PTT_STATE', state: type });
+            }
+
+            async leaveChannel(reload = false) {
+                this.isConnected = false;
+
+                if (this.pollingInterval) {
+                    clearInterval(this.pollingInterval);
+                    this.pollingInterval = null;
+                }
+
+                if (this.broadcastChannel) {
+                    this.broadcastChannel.close();
+                    this.broadcastChannel = null;
+                }
+
+                Object.values(this.peerConnections).forEach(pc => pc.close());
+                this.peerConnections = {};
+                this.dataChannels = {};
+                this.members.clear();
+
+                document.getElementById('remoteAudioContainer').innerHTML = '';
+
+                if (reload) {
+                    if (this.localStream) {
+                        this.localStream.getTracks().forEach(track => track.stop());
+                    }
+                    location.reload();
+                    return;
+                }
+
+                // UI Reset
+                document.getElementById('myPeerIdDisplay').innerText = 'ID: ----';
+                document.getElementById('joinSection').classList.remove('hidden');
+                document.getElementById('activeSection').classList.add('hidden');
+                document.getElementById('joinBtn').disabled = false;
+
+                const pttBtn = document.getElementById('pttBtn');
+                pttBtn.disabled = true;
+                pttBtn.classList.add('cursor-not-allowed', 'opacity-50');
+                pttBtn.classList.remove('transmitting-active', 'bg-gradient-to-b', 'from-emerald-600', 'to-emerald-800', 'border-emerald-500', 'text-white', 'hover:opacity-90');
+
+                document.getElementById('connectionLed').className = 'w-3 h-3 rounded-full bg-slate-600';
+                this.updateStatusBadge('gray', '未接続 (チャンネルを選択して接続してください)');
+                this.renderMembers();
+            }
+
+            updateStatusBadge(color, text) {
+                const badge = document.getElementById('statusBadge');
+                let dotColor = 'bg-slate-500';
+                let textColor = 'text-slate-300';
+
+                if (color === 'green') {
+                    dotColor = 'bg-emerald-500';
+                    textColor = 'text-emerald-400';
+                } else if (color === 'red') {
+                    dotColor = 'bg-rose-500 animate-ping';
+                    textColor = 'text-rose-400 font-bold';
+                } else if (color === 'yellow') {
+                    dotColor = 'bg-amber-500';
+                    textColor = 'text-amber-400';
+                }
+
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColor}"></span><span class="${textColor}">${text}</span>`;
+            }
+
+            setTalkingState(peerId, isTalking) {
+                if (this.members.has(peerId)) {
+                    this.members.get(peerId).isTalking = isTalking;
+                    this.renderMembers();
+                }
+            }
+
+            renderMembers() {
+                const memberList = document.getElementById('memberList');
+                const memberCount = document.getElementById('memberCount');
+                memberCount.innerText = this.members.size;
+
+                memberList.innerHTML = '';
+                if (this.members.size === 0) {
+                    memberList.innerHTML = '<div class="text-xs text-slate-500 p-2 italic w-full text-center">チャンネルに接続すると参加者が表示されます</div>';
+                    return;
+                }
+
+                this.members.forEach((m, peerId) => {
+                    const shortId = peerId.split('-').pop().toUpperCase();
+
+                    const chip = document.createElement('div');
+                    chip.className = `px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition ${
+                        m.isSelf ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-slate-900 border-slate-700 text-slate-300'
+                    } ${m.isTalking ? 'border-rose-500 bg-rose-950/50 text-rose-300' : ''}`;
+
+                    chip.innerHTML = `
+                        <i class="fa-solid fa-user text-[10px]"></i>
+                        <span>${shortId}${m.isSelf ? ' (自分)' : ''}</span>
+                        ${m.isTalking ? '<span class="text-rose-400 ml-1 animate-pulse"><i class="fa-solid fa-volume-high"></i></span>' : ''}
+                    `;
+                    memberList.appendChild(chip);
+                });
+            }
+        }
+
+        window.onload = () => {
+            window.app = new WebWalkieTalkie();
+        };
+    </script>
+</body>
+</html>
