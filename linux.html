@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PenguinOS - Advanced Multi-User Linux Web OS</title>
+  <title>PenguinOS - Advanced Multi-User Linux Web OS v4.0</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -56,15 +56,17 @@
       position: absolute;
       right: 0;
       bottom: 0;
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       cursor: se-resize;
     }
-    /* Custom Wallpapers */
+    /* Custom Wallpapers Presets */
     .wp-emerald { background-image: radial-gradient(circle at 50% 30%, #064e3b 0%, #090d16 100%); }
     .wp-cyberpunk { background-image: linear-gradient(135deg, #2b1055 0%, #7597de 100%); }
     .wp-midnight { background-image: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); }
     .wp-sunset { background-image: linear-gradient(to right, #434343 0%, #000000 100%); }
+    .wp-neon { background-image: linear-gradient(135deg, #050515 0%, #4a00e0 50%, #8e2de2 100%); }
+    .wp-aurora { background-image: linear-gradient(to top, #09203f 0%, #537895 100%); }
 
     /* Toast Animation */
     @keyframes slideInRight {
@@ -87,7 +89,7 @@
     <div class="w-full flex justify-between items-center text-xs text-slate-400 font-mono">
       <div class="flex items-center gap-2">
         <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
-        <span class="font-bold text-slate-200">PenguinOS Display Manager v3.8</span>
+        <span class="font-bold text-slate-200">PenguinOS Display Manager v4.0</span>
       </div>
       <div id="login-clock" class="text-sm text-slate-300 font-bold">00:00:00</div>
     </div>
@@ -186,7 +188,7 @@
         <button id="start-menu-btn" onclick="toggleStartMenu()" class="flex items-center gap-1.5 hover:text-white px-2 py-1 rounded transition hover:bg-white/10">
           <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
           <span class="font-bold text-slate-100">PenguinOS</span>
-          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30 hidden sm:inline">v3.8</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30 hidden sm:inline">v4.0</span>
         </button>
         <span class="text-slate-600">|</span>
         <button onclick="openApp('terminal')" class="hover:text-white flex items-center gap-1">
@@ -459,7 +461,10 @@
         <div id="editor-preview-container" class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-800 bg-slate-900 flex flex-col hidden">
           <div class="h-7 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 border-b border-slate-800">
             <span>実行プレビュー / コンソール</span>
-            <button onclick="toggleEditorPreview()" class="hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+            <div class="flex items-center gap-2">
+              <button onclick="clearEditorConsole()" class="hover:text-amber-400" title="ログ消去"><i data-lucide="eraser" class="w-3.5 h-3.5"></i></button>
+              <button onclick="toggleEditorPreview()" class="hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+            </div>
           </div>
           <iframe id="editor-iframe" class="flex-1 w-full bg-white text-slate-900 border-none"></iframe>
           <div id="editor-console-output" class="h-28 bg-slate-950 p-2 font-mono text-[11px] text-emerald-400 overflow-y-auto border-t border-slate-800"></div>
@@ -549,12 +554,21 @@
         </div>
       </div>
       <div class="h-10 bg-slate-900/70 px-3 flex items-center gap-2 border-b border-slate-800 text-xs">
-        <button onclick="reloadBrowser()" class="p-1 hover:bg-white/10 rounded text-slate-300"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i></button>
+        <button onclick="reloadBrowser()" class="p-1 hover:bg-white/10 rounded text-slate-300" title="再読み込み"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i></button>
         <div class="flex-1 flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1">
           <i data-lucide="lock" class="w-3 h-3 text-emerald-400 mr-2"></i>
           <input type="text" id="browser-url" value="https://wikipedia.org" class="w-full bg-transparent text-slate-200 outline-none font-mono text-xs" onkeydown="handleBrowserKey(event)">
         </div>
         <button onclick="navigateBrowser()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded font-medium transition">移動</button>
+      </div>
+      <!-- Bookmark Quick Links Bar -->
+      <div class="h-7 bg-slate-950/80 border-b border-slate-800/80 px-3 flex items-center gap-2 text-[11px]">
+        <span class="text-slate-500">ブックマーク:</span>
+        <button onclick="setBrowserUrl('https://wikipedia.org')" class="hover:text-cyan-300 text-slate-300">Wikipedia</button>
+        <span class="text-slate-700">|</span>
+        <button onclick="setBrowserUrl('https://bing.com')" class="hover:text-cyan-300 text-slate-300">Bing</button>
+        <span class="text-slate-700">|</span>
+        <button onclick="setBrowserUrl('https://duckduckgo.com')" class="hover:text-cyan-300 text-slate-300">DuckDuckGo</button>
       </div>
       <div class="flex-1 bg-white relative">
         <iframe id="browser-iframe" src="https://wikipedia.org" class="w-full h-full border-none"></iframe>
@@ -608,7 +622,7 @@
 
     <!-- 7. SETTINGS WINDOW -->
     <div id="win-settings" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 580px; height: 420px; top: 110px; left: 240px;" onclick="focusWindow('settings')">
+         style="width: 600px; height: 460px; top: 110px; left: 240px;" onclick="focusWindow('settings')">
       <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
         <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
           <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i>
@@ -622,19 +636,32 @@
           <h4 class="font-bold text-white mb-2 flex items-center gap-2">
             <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i> 壁紙テーマの選択
           </h4>
-          <div class="grid grid-cols-4 gap-3">
-            <button onclick="setWallpaper('wp-emerald')" class="h-16 rounded-xl wp-emerald border-2 border-emerald-500 flex items-center justify-center font-semibold text-white shadow">
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <button onclick="setWallpaper('wp-emerald')" class="h-14 rounded-xl wp-emerald border-2 border-emerald-500 flex items-center justify-center font-semibold text-white text-[11px] shadow">
               Emerald
             </button>
-            <button onclick="setWallpaper('wp-cyberpunk')" class="h-16 rounded-xl wp-cyberpunk border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white shadow">
+            <button onclick="setWallpaper('wp-cyberpunk')" class="h-14 rounded-xl wp-cyberpunk border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
               Cyberpunk
             </button>
-            <button onclick="setWallpaper('wp-midnight')" class="h-16 rounded-xl wp-midnight border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white shadow">
+            <button onclick="setWallpaper('wp-midnight')" class="h-14 rounded-xl wp-midnight border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
               Midnight
             </button>
-            <button onclick="setWallpaper('wp-sunset')" class="h-16 rounded-xl wp-sunset border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white shadow">
+            <button onclick="setWallpaper('wp-sunset')" class="h-14 rounded-xl wp-sunset border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
               Monochrome
             </button>
+            <button onclick="setWallpaper('wp-neon')" class="h-14 rounded-xl wp-neon border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+              Neon
+            </button>
+            <button onclick="setWallpaper('wp-aurora')" class="h-14 rounded-xl wp-aurora border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+              Aurora
+            </button>
+          </div>
+
+          <!-- Custom Image Wallpaper Input -->
+          <div class="mt-3 flex items-center gap-2">
+            <input type="text" id="custom-wallpaper-url" placeholder="カスタム壁紙画像URL (https://...)" 
+                   class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 outline-none focus:border-emerald-500 font-mono text-xs">
+            <button onclick="setCustomWallpaper()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium transition">適用</button>
           </div>
         </div>
 
@@ -722,7 +749,7 @@
 
   <script>
     // =========================================================================
-    // AUDIO SYNTHESIZER (No external audio files required)
+    // AUDIO SYNTHESIZER
     // =========================================================================
     const AudioEngine = {
       ctx: null,
@@ -803,7 +830,7 @@
             "user": {
               "type": "dir",
               "content": {
-                "welcome.txt": { type: "file", content: "PenguinOS Multi-User Supabase Cloud OS へようこそ！\n\n- 個別ストレージ(Supabase PostgreSQL JSONB)へ同期されています。\n- 他のユーザーとデータが混ざりません。\n- タスクマネージャ、ブラウザ、電卓、コードIDEなどの新機能が利用可能です。", updatedAt: new Date().toLocaleString() },
+                "welcome.txt": { type: "file", content: "PenguinOS Multi-User Supabase Cloud OS へようこそ！\n\n- 個別ストレージ(Supabase PostgreSQL JSONB)へ同期されています。\n- 他のユーザーとデータが混ざりません。\n- タスクマネージャ、ブラウザ、電卓、コードIDEなどの機能が利用可能です。", updatedAt: new Date().toLocaleString() },
                 "Documents": { type: "dir", content: {} },
                 "Downloads": { type: "dir", content: {} }
               }
@@ -822,6 +849,10 @@
     let selectedLoginUser = null;
     let isRemoteUpdate = false;
     let pollTimer = null;
+
+    // Command History for Terminal
+    let cmdHistory = [];
+    let cmdHistoryIndex = -1;
 
     // Running Simulated Processes
     let systemProcesses = [
@@ -1209,7 +1240,31 @@
       if (!win) return;
       if (win.classList.contains('hidden')) win.classList.remove('hidden');
       focusWindow(appId);
+      registerProcessForApp(appId);
       updateTaskbar();
+    }
+
+    function registerProcessForApp(appId) {
+      const processNames = {
+        'terminal': 'bash_terminal',
+        'filemanager': 'vfs_explorer',
+        'codeeditor': 'monaco_ide',
+        'sysmonitor': 'sys_monitor',
+        'browser': 'penguin_browser',
+        'calculator': 'calc_engine',
+        'settings': 'system_config'
+      };
+
+      const name = processNames[appId] || appId;
+      if (!systemProcesses.some(p => p.name === name)) {
+        const newPid = Math.floor(Math.random() * 800) + 300;
+        systemProcesses.push({
+          pid: newPid,
+          name: name,
+          cpu: (Math.random() * 2.5).toFixed(1) + "%",
+          ram: Math.floor(Math.random() * 40 + 20) + " MB"
+        });
+      }
     }
 
     function closeWindow(appId) {
@@ -1359,7 +1414,7 @@
       doc.write(`
         <!DOCTYPE html>
         <html>
-        <head><style>body { font-family: sans-serif; p-4; margin: 10px; }</style></head>
+        <head><style>body { font-family: sans-serif; padding: 10px; margin: 0; color: #1e293b; }</style></head>
         <body>
           <script>
             console.log = function(...args) {
@@ -1375,6 +1430,13 @@
       `);
       doc.close();
       showToast("コードを実行しました", "success");
+    }
+
+    function clearEditorConsole() {
+      const consoleOut = document.getElementById('editor-console-output');
+      if (consoleOut) {
+        consoleOut.innerHTML = `<span class="text-slate-400">--- コンソール消去完了 ---</span><br>`;
+      }
     }
 
     window.addEventListener('message', (event) => {
@@ -1479,6 +1541,11 @@
       showToast(`Web ページへ移動: ${url}`, 'info');
     }
 
+    function setBrowserUrl(url) {
+      document.getElementById('browser-url').value = url;
+      navigateBrowser();
+    }
+
     function handleBrowserKey(e) {
       if (e.key === 'Enter') navigateBrowser();
     }
@@ -1488,21 +1555,34 @@
     }
 
     // =========================================================================
-    // SETTINGS & WALLPAPER SWITCHER
+    // SETTINGS & WALLPAPER SWITCHER (FIXED WALLPAPER BUG)
     // =========================================================================
     function setWallpaper(themeClass) {
       AudioEngine.playClickSound();
       const desktop = document.getElementById('desktop');
       const login = document.getElementById('login-screen');
 
-      desktop.className = `absolute inset-0 bg-cover bg-center flex flex-col justify-between ${themeClass} transition-all duration-700`;
-      login.className = `fixed inset-0 z-50 ${themeClass} flex flex-col justify-between items-center p-6 select-none transition-all duration-500`;
+      // Preserve existing classes, only replace wallpaper prefix class (wp-*)
+      desktop.className = desktop.className.replace(/\bwp-\S+/g, '') + ' ' + themeClass;
+      desktop.style.backgroundImage = ''; // Reset custom inline styles
+
+      login.className = login.className.replace(/\bwp-\S+/g, '') + ' ' + themeClass;
+      login.style.backgroundImage = '';
 
       showToast(`壁紙を変更しました: ${themeClass}`, 'success');
     }
 
+    function setCustomWallpaper() {
+      const url = document.getElementById('custom-wallpaper-url').value.trim();
+      if (!url) return;
+
+      const desktop = document.getElementById('desktop');
+      desktop.style.backgroundImage = `url('${url}')`;
+      showToast("カスタム壁紙を設定しました", 'success');
+    }
+
     // =========================================================================
-    // VFS & TERMINAL LOGIC
+    // VFS & TERMINAL LOGIC (UPGRADED)
     // =========================================================================
     function normalizePath(path) {
       const parts = path.split('/').filter(Boolean);
@@ -1599,6 +1679,20 @@
       return false;
     }
 
+    function renameVFSItem(oldName) {
+      showInputModal("リネーム", `'${oldName}' の新しい名前を入力してください:`, (newName) => {
+        if (!newName || newName === oldName) return;
+        const dir = getDirectoryNode(currentPath);
+        if (dir && dir.content && dir.content[oldName]) {
+          dir.content[newName] = dir.content[oldName];
+          delete dir.content[oldName];
+          saveVFSToCloud();
+          renderFileManager();
+          showToast(`'${oldName}' を '${newName}' に変更しました`, 'success');
+        }
+      });
+    }
+
     function deleteVFSItem(itemName) {
       AudioEngine.playClickSound();
       const dir = getDirectoryNode(currentPath);
@@ -1617,7 +1711,7 @@
       const output = document.getElementById('terminal-output');
       if (!input || !output) return;
 
-      output.innerHTML = `<span class="text-emerald-400 font-bold">PenguinOS Advanced Linux Shell v3.8 Loaded!</span>
+      output.innerHTML = `<span class="text-emerald-400 font-bold">PenguinOS Advanced Linux Shell v4.0 Loaded!</span>
 <span class="text-amber-300 font-bold">'help'</span> と入力すると使用可能なコマンド一覧を表示します。
 ショートカット: <span class="text-cyan-300">[Ctrl + Alt + T]</span> でターミナル起動
 `;
@@ -1625,10 +1719,45 @@
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const cmdLine = input.value.trim();
-          if (cmdLine) executeTerminalCommand(cmdLine);
+          if (cmdLine) {
+            cmdHistory.push(cmdLine);
+            cmdHistoryIndex = cmdHistory.length;
+            executeTerminalCommand(cmdLine);
+          }
           input.value = '';
+        } else if (e.key === 'ArrowUp') {
+          if (cmdHistory.length > 0 && cmdHistoryIndex > 0) {
+            cmdHistoryIndex--;
+            input.value = cmdHistory[cmdHistoryIndex];
+          }
+        } else if (e.key === 'ArrowDown') {
+          if (cmdHistoryIndex < cmdHistory.length - 1) {
+            cmdHistoryIndex++;
+            input.value = cmdHistory[cmdHistoryIndex];
+          } else {
+            cmdHistoryIndex = cmdHistory.length;
+            input.value = '';
+          }
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          handleTabCompletion(input);
         }
       });
+    }
+
+    function handleTabCompletion(inputEl) {
+      const text = inputEl.value;
+      const parts = text.split(' ');
+      const lastPart = parts[parts.length - 1];
+      const dir = getDirectoryNode(currentPath);
+
+      if (dir && dir.content && lastPart) {
+        const matches = Object.keys(dir.content).filter(k => k.startsWith(lastPart));
+        if (matches.length === 1) {
+          parts[parts.length - 1] = matches[0];
+          inputEl.value = parts.join(' ');
+        }
+      }
     }
 
     function executeTerminalCommand(cmdLine) {
@@ -1647,11 +1776,14 @@
           response = `
 <span class="text-amber-300 font-bold font-mono">コマンド一覧:</span>
   <span class="text-emerald-400 font-mono">ls / pwd / cd [dir]</span> : ファイル/ディレクトリ操作
-  <span class="text-emerald-400 font-mono">cat / touch / rm [file]</span> : ファイル閲覧・作成・削除
+  <span class="text-emerald-400 font-mono">cat / touch / rm / mkdir</span> : ファイル作成・削除・フォルダ作成
+  <span class="text-emerald-400 font-mono">echo [text]</span>     : テキスト表示
   <span class="text-emerald-400 font-mono">top / ps</span>         : 実行中プロセスの表示
   <span class="text-emerald-400 font-mono">kill [pid]</span>       : プロセスの強制終了
   <span class="text-emerald-400 font-mono">js [code]</span>        : JSコードの評価実行
   <span class="text-emerald-400 font-mono">calc [expr]</span>      : 計算実行
+  <span class="text-emerald-400 font-mono">theme [name]</span>     : 壁紙変更 (emerald, cyberpunk, midnight, sunset, neon, aurora)
+  <span class="text-emerald-400 font-mono">date / history</span>   : 日時表示・コマンド履歴
   <span class="text-emerald-400 font-mono">whoami / neofetch</span>: システム&アカウント情報
   <span class="text-emerald-400 font-mono">clear</span>            : 画面クリア
 `;
@@ -1659,6 +1791,27 @@
 
         case 'whoami':
           response = activeLoggedInUser || 'guest';
+          break;
+
+        case 'date':
+          response = new Date().toString();
+          break;
+
+        case 'history':
+          response = cmdHistory.map((c, i) => ` ${i + 1}  ${c}`).join('\n');
+          break;
+
+        case 'echo':
+          response = args.join(' ');
+          break;
+
+        case 'theme':
+          if (args[0]) {
+            setWallpaper(`wp-${args[0]}`);
+            response = `壁紙テーマを wp-${args[0]} に設定しました。`;
+          } else {
+            response = '使用法: theme [emerald|cyberpunk|midnight|sunset|neon|aurora]';
+          }
           break;
 
         case 'ls':
@@ -1669,6 +1822,30 @@
               return item.type === 'dir' ? `<span class="text-blue-400 font-bold">${name}/</span>` : `<span class="text-slate-200">${name}</span>`;
             });
             response = items.length > 0 ? items.join('   ') : '<span class="text-slate-500">(空のディレクトリ)</span>';
+          }
+          break;
+
+        case 'mkdir':
+          if (args[0]) {
+            createNewFolder(args[0]);
+            response = `ディレクトリ '${args[0]}' を作成しました。`;
+          }
+          break;
+
+        case 'touch':
+          if (args[0]) {
+            setFileContent(args[0], "");
+            response = `ファイル '${args[0]}' を作成しました。`;
+          }
+          break;
+
+        case 'rm':
+          if (args[0]) {
+            if (deleteVFSItem(args[0])) {
+              response = `'${args[0]}' を削除しました。`;
+            } else {
+              response = `<span class="text-rose-400">rm: ${args[0]}: ファイルまたはフォルダが見つかりません</span>`;
+            }
           }
           break;
 
@@ -1725,7 +1902,7 @@
 <span class="text-emerald-400 font-bold font-mono">
        .-.          User: ${activeLoggedInUser}@penguin-pc
       /   \\         ----------------
-     | O.O |        OS: PenguinOS v3.8 Cloud Edition
+     | O.O |        OS: PenguinOS v4.0 Cloud Edition
      |  \\b |        Kernel: 6.8.0-supabase
     / /   \\ \\       Desktop: Multi-User Web Shell
    / /     \\ \\      Memory: 1.8 GB / 8.0 GB
@@ -1778,6 +1955,7 @@
             <span class="text-xs text-slate-200 font-medium truncate w-full text-center">${itemName}</span>
           </div>
           <div class="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition">
+            <button onclick="renameVFSItem('${itemName}')" class="p-1 hover:bg-slate-700 text-slate-300 rounded" title="リネーム"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
             <button onclick="deleteVFSItem('${itemName}')" class="p-1 hover:bg-rose-950 text-rose-400 rounded" title="削除"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
           </div>
         `;
@@ -1885,6 +2063,7 @@
     window.navigateDir = navigateDir;
     window.promptCreateFile = promptCreateFile;
     window.promptCreateFolder = promptCreateFolder;
+    window.renameVFSItem = renameVFSItem;
     window.deleteVFSItem = deleteVFSItem;
     window.openInEditor = openInEditor;
     window.saveCurrentTextFile = saveCurrentTextFile;
@@ -1895,12 +2074,15 @@
     window.executeLoginCommand = executeLoginCommand;
     window.logoutUser = logoutUser;
     window.runCodeInEditor = runCodeInEditor;
+    window.clearEditorConsole = clearEditorConsole;
     window.toggleEditorPreview = toggleEditorPreview;
     window.calcPress = calcPress;
     window.navigateBrowser = navigateBrowser;
+    window.setBrowserUrl = setBrowserUrl;
     window.handleBrowserKey = handleBrowserKey;
     window.reloadBrowser = reloadBrowser;
     window.setWallpaper = setWallpaper;
+    window.setCustomWallpaper = setCustomWallpaper;
     window.killProcess = killProcess;
     window.initResize = initResize;
   </script>
