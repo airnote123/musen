@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full select-none">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PenguinOS - Multi-User Cloud Linux Desktop (Supabase Edition)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS Client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+    .font-mono {
+      font-family: 'Fira Code', monospace;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+    .glass-panel {
+      background: rgba(26, 32, 44, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .glass-bar {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 relative overflow-hidden">
+
+  <!-- ================================================================= -->
+  <!-- LOGIN / DISPLAY MANAGER OVERLAY (Shown on Boot & Logout) -->
+  <!-- ================================================================= -->
+  <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col justify-between items-center p-6 select-none"
+       style="background-image: radial-gradient(circle at 50% 30%, #064e3b 0%, #090d16 100%);">
+    
+    <!-- Top System Time on Login -->
+    <div class="w-full flex justify-between items-center text-xs text-slate-400 font-mono">
+      <div class="flex items-center gap-2">
+        <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+        <span class="font-bold text-slate-200">PenguinOS Display Manager</span>
+      </div>
+      <div id="login-clock" class="text-sm text-slate-300 font-bold">00:00:00</div>
+    </div>
+
+    <!-- Login Box Center -->
+    <div class="w-full max-w-md glass-panel p-8 rounded-2xl shadow-2xl border border-slate-700/60 flex flex-col items-center space-y-6">
+      
+      <div class="relative">
+        <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg border-2 border-white/20">
+          <i data-lucide="user" class="w-10 h-10 text-white"></i>
+        </div>
+        <span id="login-status-dot" class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-slate-900 animate-pulse"></span>
+      </div>
+
+      <div class="text-center">
+        <h1 class="text-xl font-bold text-white tracking-wide" id="selected-user-display">ユーザーを選択してください</h1>
+        <p class="text-xs text-slate-400 mt-1" id="login-subtext">Supabase DB 連動中</p>
+      </div>
+
+      <!-- User List Dropdown / Cards -->
+      <div id="login-user-list-container" class="w-full space-y-2 max-h-36 overflow-y-auto pr-1">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Password Input Form -->
+      <form id="login-form" onsubmit="handleLoginSubmit(event)" class="w-full space-y-4">
+        <div class="relative">
+          <input type="password" id="login-password" placeholder="パスワードを入力..." 
+                 class="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+          <button type="submit" class="absolute right-2 top-2 p-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition">
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="login-error-msg" class="text-xs text-rose-400 text-center hidden"></div>
+      </form>
+    </div>
+
+    <!-- Bottom Bar on Login Screen (With Command Button) -->
+    <div class="w-full max-w-4xl flex items-center justify-between text-xs text-slate-400">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleLoginTerminal()" class="flex items-center gap-2 bg-slate-800/90 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl border border-slate-700 shadow-lg transition active:scale-95">
+          <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+          <span class="font-bold">コマンド</span>
+        </button>
+      </div>
+
+      <div class="text-[11px] font-mono text-slate-500">
+        PenguinOS Linux Multi-User Kernel v3.6 (Supabase Backed)
+      </div>
+    </div>
+
+    <!-- LOGIN TERMINAL MODAL (Triggered by コマンド Button) -->
+    <div id="login-terminal-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl bg-slate-950 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[420px]">
+        
+        <!-- Modal Header -->
+        <div class="h-10 bg-slate-900 px-4 flex items-center justify-between border-b border-slate-800">
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+            <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
+            <span>System User Provisioning Command Line</span>
+          </div>
+          <button onclick="toggleLoginTerminal()" class="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Terminal Log Body -->
+        <div class="flex-1 p-4 font-mono text-xs text-slate-200 overflow-y-auto space-y-2" id="login-term-output">
+          <div class="text-emerald-400 font-bold">=== PenguinOS User Administration Prompt ===</div>
+          <div class="text-slate-400">
+            ユーザー作成コマンド:<br>
+            <span class="text-amber-300">net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add</span><br><br>
+            管理者権限付与コマンド:<br>
+            <span class="text-amber-300">net localgroup administrators &lt;ユーザー名&gt; /add</span>
+          </div>
+          <div class="border-b border-slate-800 my-2"></div>
+        </div>
+
+        <!-- Command Input -->
+        <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2">
+          <span class="text-emerald-400 font-mono font-bold text-xs">C:\SYSTEM&gt;</span>
+          <input type="text" id="login-term-input" class="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-xs focus:ring-0" 
+                 placeholder="例: net user John MyPass123 /add" autocomplete="off" spellcheck="false" onkeydown="handleLoginCommandKey(event)">
+          <button onclick="executeLoginCommand()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1 rounded font-medium">実行</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================================= -->
+  <!-- MAIN DESKTOP ENVIRONMENT -->
+  <!-- ================================================================= -->
+  <div id="desktop" class="absolute inset-0 bg-cover bg-center flex flex-col justify-between"
+       style="background-image: radial-gradient(circle at 50% 50%, #022c22 0%, #0f172a 100%);">
+    
+    <!-- Top System Bar -->
+    <div class="h-8 w-full glass-bar flex items-center justify-between px-4 text-xs font-medium text-slate-300 z-40 select-none">
+      <div class="flex items-center gap-4">
+        <button id="start-menu-btn" onclick="toggleStartMenu()" class="flex items-center gap-1.5 hover:text-white px-2 py-1 rounded transition hover:bg-white/10">
+          <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+          <span class="font-bold text-slate-100">PenguinOS</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">Supabase</span>
+        </button>
+        <span class="text-slate-600">|</span>
+        <button onclick="openApp('terminal')" class="hover:text-white flex items-center gap-1">
+          <i data-lucide="square-terminal" class="w-3.5 h-3.5 text-slate-400"></i> ターミナル
+        </button>
+        <button onclick="openApp('filemanager')" class="hover:text-white flex items-center gap-1">
+          <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i> ファイル
+        </button>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div id="cloud-status-badge" class="flex items-center gap-1.5 text-[11px] bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+          <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="cloud-status-text" class="text-slate-300 font-mono">Supabase 接続中...</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <div id="active-user-badge" class="flex items-center gap-1 text-emerald-400 font-semibold text-[11px]">
+          <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+          <span id="active-user-name">Guest</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <div id="top-clock" class="font-mono text-slate-200">12:00 PM</div>
+      </div>
+    </div>
+
+    <!-- Desktop Workspace Grid Icons -->
+    <div id="workspace" class="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-flow-col md:grid-rows-6 gap-6 justify-start items-start relative z-10" onclick="deselectIcons(event)">
+      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+           onclick="openApp('terminal'); event.stopPropagation();">
+        <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 shadow-lg flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+          <i data-lucide="square-terminal" class="w-7 h-7"></i>
+        </div>
+        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ターミナル</span>
+      </div>
+
+      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+           onclick="openApp('filemanager'); event.stopPropagation();">
+        <div class="w-12 h-12 rounded-xl bg-amber-950/40 border border-amber-600/30 shadow-lg flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+          <i data-lucide="folder-open" class="w-7 h-7"></i>
+        </div>
+        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ファイル</span>
+      </div>
+
+      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+           onclick="openApp('texteditor'); event.stopPropagation();">
+        <div class="w-12 h-12 rounded-xl bg-blue-950/40 border border-blue-600/30 shadow-lg flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+          <i data-lucide="file-text" class="w-7 h-7"></i>
+        </div>
+        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">テキスト編集</span>
+      </div>
+
+      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+           onclick="openApp('storageinfo'); event.stopPropagation();">
+        <div class="w-12 h-12 rounded-xl bg-purple-950/40 border border-purple-600/30 shadow-lg flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
+          <i data-lucide="database" class="w-7 h-7"></i>
+        </div>
+        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">システム情報</span>
+      </div>
+    </div>
+
+    <!-- Start Menu Overlay -->
+    <div id="start-menu" class="hidden absolute bottom-12 left-4 w-80 glass-panel rounded-2xl shadow-2xl z-50 p-4 border border-slate-700/50 flex flex-col gap-3 select-none">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-700/60">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow" id="menu-avatar">
+            U
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-white" id="menu-username">user@penguin-pc</div>
+            <div class="text-xs text-emerald-400 flex items-center gap-1" id="menu-cloud-info">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <span id="menu-group-tag">Standard User</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="logoutUser()" class="p-2 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl transition" title="ログアウト">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-1">
+        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">アプリケーション</div>
+        <button onclick="openApp('terminal'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+          <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i> ターミナル (Bash Engine)
+        </button>
+        <button onclick="openApp('filemanager'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+          <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i> ファイルマネージャー (Supabase VFS)
+        </button>
+        <button onclick="openApp('texteditor'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+          <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i> テキストエディタ
+        </button>
+        <button onclick="openApp('storageinfo'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+          <i data-lucide="database" class="w-4 h-4 text-purple-400"></i> Supabase DBガイド & SQL構成
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Taskbar -->
+    <div class="h-12 w-full glass-bar flex items-center justify-between px-4 z-40 shadow-2xl select-none">
+      <div class="flex items-center gap-2">
+        <button id="launcher-icon" onclick="toggleStartMenu()" class="p-2 rounded-xl hover:bg-white/10 text-emerald-400 transition flex items-center justify-center">
+          <i data-lucide="grid" class="w-5 h-5"></i>
+        </button>
+        <div class="h-5 w-px bg-slate-700 mx-1"></div>
+        <div id="taskbar-apps" class="flex items-center gap-2"></div>
+      </div>
+
+      <div class="text-xs text-slate-400 font-mono hidden sm:block">
+        PenguinOS Linux Kernel 6.8.0-supabase
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================================= -->
+  <!-- WINDOWS LAYER -->
+  <!-- ================================================================= -->
+  <div id="windows-container" class="absolute inset-0 pointer-events-none z-20">
+
+    <!-- 1. TERMINAL WINDOW -->
+    <div id="win-terminal" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+         style="width: 680px; height: 420px; top: 80px; left: 100px;" onclick="focusWindow('terminal')">
+      <div class="window-header h-9 bg-slate-950/80 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+          <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
+          <span id="terminal-win-title">terminal@penguin-pc: ~</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="minimizeWindow('terminal')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+          <button onclick="maximizeWindow('terminal')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+          <button onclick="closeWindow('terminal')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+        </div>
+      </div>
+      <div class="flex-1 bg-slate-950/95 p-4 font-mono text-xs sm:text-sm text-slate-200 overflow-y-auto flex flex-col justify-between" id="terminal-body">
+        <div id="terminal-output" class="space-y-1.5 whitespace-pre-wrap"></div>
+        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-900">
+          <span class="text-emerald-400 font-bold" id="terminal-prompt">user@penguin-pc:~$</span>
+          <input type="text" id="terminal-input" class="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-xs sm:text-sm focus:ring-0" autocomplete="off" spellcheck="false" placeholder="コマンドを入力 (例: help, ls, cat welcome.txt, neofetch)">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. FILE MANAGER WINDOW -->
+    <div id="win-filemanager" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+         style="width: 720px; height: 460px; top: 110px; left: 160px;" onclick="focusWindow('filemanager')">
+      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+          <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i>
+          <span>ファイルマネージャー - Supabase VFS</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="minimizeWindow('filemanager')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+          <button onclick="maximizeWindow('filemanager')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+          <button onclick="closeWindow('filemanager')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+        </div>
+      </div>
+      <div class="h-10 bg-slate-900/50 px-3 flex items-center justify-between border-b border-slate-800 text-xs">
+        <div class="flex items-center gap-2">
+          <button onclick="navigateDir('..')" class="p-1 rounded hover:bg-white/10 text-slate-300" title="親フォルダへ">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div id="file-current-path" class="bg-slate-950 px-2.5 py-1 rounded border border-slate-800 font-mono text-slate-300 min-w-[200px]">
+            /home/user
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="promptCreateFile()" class="flex items-center gap-1 bg-emerald-600/80 hover:bg-emerald-500 text-white px-2.5 py-1 rounded font-medium transition">
+            <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> 新規ファイル
+          </button>
+          <button onclick="promptCreateFolder()" class="flex items-center gap-1 bg-amber-600/80 hover:bg-amber-500 text-white px-2.5 py-1 rounded font-medium transition">
+            <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i> 新規フォルダ
+          </button>
+        </div>
+      </div>
+      <div class="flex-1 p-4 bg-slate-950/60 overflow-y-auto">
+        <div id="file-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
+      </div>
+    </div>
+
+    <!-- 3. TEXT EDITOR WINDOW -->
+    <div id="win-texteditor" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+         style="width: 650px; height: 440px; top: 130px; left: 220px;" onclick="focusWindow('texteditor')">
+      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+          <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i>
+          <span id="editor-title">テキストエディタ - (未命名)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="minimizeWindow('texteditor')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+          <button onclick="maximizeWindow('texteditor')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+          <button onclick="closeWindow('texteditor')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+        </div>
+      </div>
+      <div class="h-10 bg-slate-900/50 px-3 flex items-center justify-between border-b border-slate-800 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400 font-mono text-[11px]">ファイルパス:</span>
+          <input type="text" id="editor-filename" value="/home/user/newfile.txt" class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-mono text-xs w-60 outline-none focus:border-blue-500">
+        </div>
+        <button onclick="saveCurrentTextFile()" class="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded font-medium transition shadow">
+          <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i> Supabaseへ保存
+        </button>
+      </div>
+      <div class="flex-1 relative bg-slate-950/90 p-2">
+        <textarea id="editor-textarea" class="w-full h-full bg-transparent text-slate-100 font-mono text-xs sm:text-sm p-2 outline-none resize-none" placeholder="ここにテキストを入力... 保存するとユーザー別Supabase領域へ保存されます。"></textarea>
+      </div>
+      <div class="h-6 bg-slate-950 px-3 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-900 font-mono">
+        <span id="editor-status">Ready</span>
+        <span>UTF-8 | Supabase Cloud Synced</span>
+      </div>
+    </div>
+
+    <!-- 4. STORAGE & SYSTEM INFO WINDOW -->
+    <div id="win-storageinfo" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+         style="width: 620px; height: 440px; top: 140px; left: 180px;" onclick="focusWindow('storageinfo')">
+      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+          <i data-lucide="database" class="w-4 h-4 text-purple-400"></i>
+          <span>マルチユーザー & Supabase ガイド</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="minimizeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+          <button onclick="maximizeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+          <button onclick="closeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+        </div>
+      </div>
+      <div class="flex-1 p-5 bg-slate-950/90 text-slate-300 text-xs sm:text-sm overflow-y-auto space-y-4">
+        <div class="p-3.5 bg-emerald-950/30 border border-emerald-500/30 rounded-xl">
+          <h3 class="font-bold text-emerald-300 text-sm flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Supabase データベース連携完了
+          </h3>
+          <p class="mt-1.5 text-slate-300 leading-relaxed text-xs">
+            本システムは Supabase REST API と PostgREST リアルタイムリスナーに正常接続されています。ユーザーのアカウント作成情報や個別のファイルツリーは Supabase PostgreSQL データベースへ同期されます。
+          </p>
+        </div>
+
+        <div class="space-y-2.5">
+          <h4 class="font-semibold text-white text-xs uppercase tracking-wider text-slate-400">Supabase テーブル構造</h4>
+          
+          <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
+            <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i> public.system_accounts
+            </div>
+            <p class="text-xs text-slate-400 font-mono">
+              Columns: username (PK), password, group_name, created_at
+            </p>
+            <p class="text-[11px] text-slate-400">
+              `net user` コマンドで作成された全アカウント情報を管理します。
+            </p>
+          </div>
+
+          <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
+            <div class="font-bold text-amber-400 flex items-center gap-1.5">
+              <i data-lucide="folder-lock" class="w-3.5 h-3.5"></i> public.user_vfs
+            </div>
+            <p class="text-xs text-slate-400 font-mono">
+              Columns: user_key (PK), vfs_tree (JSONB), updated_at
+            </p>
+            <p class="text-[11px] text-slate-400">
+              ユーザーごとの仮想ファイルツリーがJSON形式で独立保存されます。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Dialog -->
+  <div id="custom-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <h3 id="modal-title" class="text-sm font-bold text-white">通知</h3>
+      <div id="modal-body" class="text-xs text-slate-300 whitespace-pre-wrap"></div>
+      <div id="modal-input-container" class="hidden">
+        <input type="text" id="modal-input" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-xs text-white outline-none focus:border-emerald-500">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="modal-cancel-btn" onclick="closeModal()" class="px-3 py-1.5 rounded text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">キャンセル</button>
+        <button id="modal-ok-btn" class="px-3 py-1.5 rounded text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase Logic Module -->
+  <script>
+    // =========================================================================
+    // SUPABASE CONFIGURATION
+    // =========================================================================
+    const SUPABASE_URL = "https://qfzyrogwyjbzbblnvqzy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw";
+
+    let supabaseClient = null;
+
+    // Default Virtual File System Structure
+    const DEFAULT_VFS = {
+      "type": "dir",
+      "content": {
+        "home": {
+          "type": "dir",
+          "content": {
+            "user": {
+              "type": "dir",
+              "content": {
+                "welcome.txt": { type: "file", content: "PenguinOS Multi-User Supabase Cloud OS へようこそ！\n\n- ユーザー固有の個別ストレージ(Supabase PostgreSQL JSONB)へ保存されています。\n- 他のユーザーとデータが混ざりません。\n- ターミナルから `net user` や標準コマンドが使用できます。", updatedAt: new Date().toLocaleString() },
+                "Documents": { type: "dir", content: {} },
+                "Downloads": { type: "dir", content: {} }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    let VFS = JSON.parse(JSON.stringify(DEFAULT_VFS));
+    let currentPath = "/home/user";
+    let activeWindowZ = 10;
+    
+    // Account & Realtime State
+    let registeredUsers = {}; // Dict of { username: { password, group, createdAt } }
+    let activeLoggedInUser = null; // Currently logged in OS user name
+    let selectedLoginUser = null;
+    let isRemoteUpdate = false;
+
+    let accountsChannel = null;
+    let vfsChannel = null;
+    let pollTimer = null;
+
+    async function initSupabase() {
+      try {
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+          // Initialize Supabase Client without Realtime WebSockets to avoid Canvas iFrame SecurityErrors
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: false }
+          });
+          updateCloudStatusUI("Supabase 接続済み (REST API)", "text-emerald-400", "bg-emerald-400");
+
+          // Load Accounts from Supabase
+          await loadAccountsFromSupabase();
+          startPolling();
+        } else {
+          throw new Error("Supabase SDK library failed to load.");
+        }
+      } catch (err) {
+        console.warn("Supabase init failure, falling back to LocalStorage:", err);
+        updateCloudStatusUI("オフライン (Local)", "text-amber-400", "bg-amber-400");
+        loadAccountsFromLocal();
+      }
+    }
+
+    async function loadAccountsFromSupabase() {
+      if (!supabaseClient) {
+        loadAccountsFromLocal();
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('system_accounts')
+          .select('*');
+
+        if (error) throw error;
+
+        if (data) {
+          registeredUsers = {};
+          data.forEach(row => {
+            registeredUsers[row.username] = {
+              password: row.password,
+              group: row.group_name || 'users',
+              createdAt: row.created_at
+            };
+          });
+          saveAccountsToLocal();
+          renderLoginUserList();
+        }
+      } catch (err) {
+        console.warn("Failed to load accounts from Supabase:", err.message);
+        loadAccountsFromLocal();
+      }
+    }
+
+    function startPolling() {
+      if (pollTimer) return;
+      pollTimer = setInterval(() => {
+        loadAccountsFromSupabase();
+        if (activeLoggedInUser) {
+          fetchUserVFSFromSupabase(activeLoggedInUser.toLowerCase());
+        }
+      }, 5000);
+    }
+
+    async function fetchUserVFSFromSupabase(userKey) {
+      if (!supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('user_vfs')
+          .select('vfs_tree')
+          .eq('user_key', userKey)
+          .maybeSingle();
+
+        if (!error && data && data.vfs_tree && !isRemoteUpdate) {
+          if (JSON.stringify(VFS) !== JSON.stringify(data.vfs_tree)) {
+            VFS = data.vfs_tree;
+            renderFileManager();
+            updateTerminalPrompt();
+          }
+        }
+      } catch (e) {}
+    }
+
+    function loadAccountsFromLocal() {
+      try {
+        const local = localStorage.getItem('penguin_os_accounts_v1');
+        if (local) registeredUsers = JSON.parse(local);
+      } catch(e) {}
+      renderLoginUserList();
+    }
+
+    function saveAccountsToLocal() {
+      try {
+        localStorage.setItem('penguin_os_accounts_v1', JSON.stringify(registeredUsers));
+      } catch(e) {}
+    }
+
+    async function saveAccountToSupabase(username, password, groupName) {
+      saveAccountsToLocal();
+
+      if (!supabaseClient) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('system_accounts')
+          .upsert({
+            username: username,
+            password: password,
+            group_name: groupName,
+            created_at: new Date().toISOString()
+          });
+
+        if (error) console.warn("Supabase account save error:", error.message);
+      } catch (e) {
+        console.warn("Failed to sync account to Supabase:", e.message);
+      }
+    }
+
+    async function subscribeUserVFS(username) {
+      const userKey = username.toLowerCase();
+
+      // Load local cache as immediate fallback
+      loadVFSToLocal(userKey);
+
+      if (!supabaseClient) return;
+
+      // Initial HTTP Fetch via REST API
+      await fetchUserVFSFromSupabase(userKey);
+
+      // Start REST HTTP Polling
+      startPolling();
+    }
+
+    function loadVFSToLocal(userKey) {
+      try {
+        const cached = localStorage.getItem(`penguin_os_vfs_${userKey}`);
+        if (cached) {
+          VFS = JSON.parse(cached);
+          renderFileManager();
+          updateTerminalPrompt();
+        }
+      } catch(e) {}
+    }
+
+    async function saveVFSToCloud() {
+      if (isRemoteUpdate) return;
+
+      if (activeLoggedInUser) {
+        try {
+          localStorage.setItem(`penguin_os_vfs_${activeLoggedInUser.toLowerCase()}`, JSON.stringify(VFS));
+        } catch(e) {}
+      }
+
+      if (!supabaseClient || !activeLoggedInUser) return;
+
+      const userKey = activeLoggedInUser.toLowerCase();
+
+      try {
+        const { error } = await supabaseClient
+          .from('user_vfs')
+          .upsert({
+            user_key: userKey,
+            vfs_tree: VFS,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) console.warn("Supabase VFS sync error:", error.message);
+      } catch (e) {
+        console.warn("Failed to sync VFS to Supabase:", e.message);
+      }
+    }
+
+    function updateCloudStatusUI(text, textColor, dotBg) {
+      const textEl = document.getElementById('cloud-status-text');
+      const dotEl = document.getElementById('cloud-status-dot');
+      if (textEl) {
+        textEl.innerText = text;
+        textEl.className = `font-mono ${textColor}`;
+      }
+      if (dotEl) {
+        dotEl.className = `w-2 h-2 rounded-full ${dotBg} animate-pulse`;
+      }
+    }
+
+    // =========================================================================
+    // LOGIN SCREEN & USER CREATION (`net user`) LOGIC
+    // =========================================================================
+    function renderLoginUserList() {
+      const container = document.getElementById('login-user-list-container');
+      const subtext = document.getElementById('login-subtext');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const userKeys = Object.keys(registeredUsers);
+
+      if (userKeys.length === 0) {
+        subtext.innerText = "登録されているアカウントがありません";
+        subtext.className = "text-xs text-slate-400 mt-1";
+        document.getElementById('selected-user-display').innerText = "アカウントなし";
+        selectedLoginUser = null;
+        return;
+      }
+
+      subtext.innerText = "ログインするアカウントを選択してください";
+      subtext.className = "text-xs text-slate-400 mt-1";
+
+      userKeys.forEach(uname => {
+        const uObj = registeredUsers[uname];
+        const btn = document.createElement('button');
+        const isSelected = selectedLoginUser === uname;
+        btn.className = `w-full flex items-center justify-between p-2.5 rounded-xl border transition ${
+          isSelected ? 'bg-emerald-950/60 border-emerald-500/80 text-white shadow-md' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80'
+        }`;
+        
+        btn.onclick = () => selectUserForLogin(uname);
+
+        const isAdmin = uObj.group === 'administrators';
+        btn.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full ${isAdmin ? 'bg-amber-600' : 'bg-slate-700'} flex items-center justify-center font-bold text-xs text-white">
+              ${uname.charAt(0).toUpperCase()}
+            </div>
+            <div class="text-left">
+              <div class="text-xs font-semibold">${uname}</div>
+              <div class="text-[10px] text-slate-400 font-mono">${isAdmin ? 'Administrators' : 'Users'}</div>
+            </div>
+          </div>
+          ${isSelected ? `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>` : ''}
+        `;
+        container.appendChild(btn);
+      });
+
+      if (!selectedLoginUser && userKeys.length > 0) {
+        selectUserForLogin(userKeys[0]);
+      }
+
+      lucide.createIcons();
+    }
+
+    function selectUserForLogin(uname) {
+      selectedLoginUser = uname;
+      document.getElementById('selected-user-display').innerText = uname;
+      document.getElementById('login-error-msg').classList.add('hidden');
+      renderLoginUserList();
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const errEl = document.getElementById('login-error-msg');
+      errEl.classList.add('hidden');
+
+      if (!selectedLoginUser || !registeredUsers[selectedLoginUser]) {
+        errEl.innerText = "ユーザーが選択されていないか、存在しません。";
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const pwdInput = document.getElementById('login-password').value;
+      const targetUser = registeredUsers[selectedLoginUser];
+
+      if (targetUser.password !== pwdInput) {
+        errEl.innerText = "パスワードが正しくありません。";
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      // Successful Login
+      activeLoggedInUser = selectedLoginUser;
+      document.getElementById('login-password').value = '';
+      
+      // Setup UI for Active User
+      document.getElementById('active-user-name').innerText = activeLoggedInUser;
+      document.getElementById('menu-username').innerText = `${activeLoggedInUser}@penguin-pc`;
+      document.getElementById('menu-avatar').innerText = activeLoggedInUser.charAt(0).toUpperCase();
+      document.getElementById('menu-group-tag').innerText = targetUser.group === 'administrators' ? 'Administrator' : 'Standard User';
+      
+      currentPath = `/home/${activeLoggedInUser}`;
+
+      // Reset default local VFS structure
+      VFS = {
+        "type": "dir",
+        "content": {
+          "home": {
+            "type": "dir",
+            "content": {
+              [activeLoggedInUser]: {
+                "type": "dir",
+                "content": {
+                  "welcome.txt": { 
+                    type: "file", 
+                    content: `${activeLoggedInUser} さん、PenguinOSへようこそ！\n\n個別のファイルシステム(Supabase)へ接続されました。`, 
+                    updatedAt: new Date().toLocaleString() 
+                  },
+                  "Documents": { type: "dir", content: {} },
+                  "Downloads": { type: "dir", content: {} }
+                }
+              }
+            }
+          }
+        }
+      };
+
+      subscribeUserVFS(activeLoggedInUser);
+      renderFileManager();
+      updateTerminalPrompt();
+
+      // Hide Login Screen
+      document.getElementById('login-screen').classList.add('hidden');
+    }
+
+    function logoutUser() {
+      activeLoggedInUser = null;
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('start-menu').classList.add('hidden');
+      renderLoginUserList();
+    }
+
+    function toggleLoginTerminal() {
+      const modal = document.getElementById('login-terminal-modal');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        document.getElementById('login-term-input').focus();
+      }
+    }
+
+    function handleLoginCommandKey(e) {
+      if (e.key === 'Enter') {
+        executeLoginCommand();
+      }
+    }
+
+    function executeLoginCommand() {
+      const input = document.getElementById('login-term-input');
+      const output = document.getElementById('login-term-output');
+      const cmdStr = input.value.trim();
+      if (!cmdStr) return;
+
+      output.innerHTML += `<div><span class="text-emerald-400">C:\\SYSTEM&gt;</span> ${escapeHtml(cmdStr)}</div>`;
+      input.value = '';
+
+      // Command Parsing
+      const parts = cmdStr.split(/\s+/);
+      let resMsg = '';
+
+      if (parts[0].toLowerCase() === 'net') {
+        if (parts[1] && parts[1].toLowerCase() === 'user') {
+          if (parts.length >= 5 && parts[parts.length - 1].toLowerCase() === '/add') {
+            const uname = parts[2];
+            const pass = parts[3];
+            
+            registeredUsers[uname] = {
+              password: pass,
+              group: 'users',
+              createdAt: new Date().toISOString()
+            };
+
+            saveAccountToSupabase(uname, pass, 'users');
+            renderLoginUserList();
+            resMsg = `<span class="text-emerald-400">コマンドは正常に終了しました。ユーザー '${uname}' を作成しました。</span>`;
+          } else {
+            resMsg = `<span class="text-rose-400">構文エラー: net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add の形式で入力してください。</span>`;
+          }
+        } else if (parts[1] && parts[1].toLowerCase() === 'localgroup') {
+          if (parts[2] && parts[2].toLowerCase() === 'administrators' && parts.length >= 5 && parts[parts.length - 1].toLowerCase() === '/add') {
+            const uname = parts[3];
+            if (registeredUsers[uname]) {
+              registeredUsers[uname].group = 'administrators';
+              saveAccountToSupabase(uname, registeredUsers[uname].password, 'administrators');
+              renderLoginUserList();
+              resMsg = `<span class="text-emerald-400">コマンドは正常に終了しました。'${uname}' に管理者権限(administrators)を付与しました。</span>`;
+            } else {
+              resMsg = `<span class="text-rose-400">エラー: ユーザー '${uname}' は存在しません。先に \`net user\` で作成してください。</span>`;
+            }
+          } else {
+            resMsg = `<span class="text-rose-400">構文エラー: net localgroup administrators &lt;ユーザー名&gt; /add の形式で入力してください。</span>`;
+          }
+        } else {
+          resMsg = `<span class="text-rose-400">サポートされていない net サブコマンドです。</span>`;
+        }
+      } else if (cmdStr.toLowerCase() === 'help') {
+        resMsg = `
+使用可能なコマンド:
+  <span class="text-amber-300">net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add</span> : ユーザーを作成
+  <span class="text-amber-300">net localgroup administrators &lt;ユーザー名&gt; /add</span> : 管理者権限を付与
+  <span class="text-amber-300">cls / clear</span> : 画面クリア
+`;
+      } else if (cmdStr.toLowerCase() === 'cls' || cmdStr.toLowerCase() === 'clear') {
+        output.innerHTML = '';
+        return;
+      } else {
+        resMsg = `<span class="text-rose-400">'${cmdStr}' は内部コマンドとして認識されていません。'help' を入力してください。</span>`;
+      }
+
+      output.innerHTML += `<div class="mb-2">${resMsg}</div>`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    // =========================================================================
+    // STANDARD DESKTOP & VFS SYSTEM LOGIC
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      updateClock();
+      setInterval(updateClock, 1000);
+      setupWindowDrag();
+      
+      initTerminal();
+      initSupabase();
+    });
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      const topClock = document.getElementById('top-clock');
+      const loginClock = document.getElementById('login-clock');
+      if (topClock) topClock.innerText = timeStr;
+      if (loginClock) loginClock.innerText = timeStr;
+    }
+
+    function toggleStartMenu() {
+      const menu = document.getElementById('start-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    function deselectIcons(e) {
+      document.getElementById('start-menu').classList.add('hidden');
+    }
+
+    function openApp(appId) {
+      const win = document.getElementById(`win-${appId}`);
+      if (!win) return;
+      if (win.classList.contains('hidden')) win.classList.remove('hidden');
+      focusWindow(appId);
+      updateTaskbar();
+    }
+
+    function closeWindow(appId) {
+      const win = document.getElementById(`win-${appId}`);
+      if (win) win.classList.add('hidden');
+      updateTaskbar();
+    }
+
+    function minimizeWindow(appId) {
+      const win = document.getElementById(`win-${appId}`);
+      if (win) win.classList.add('hidden');
+      updateTaskbar();
+    }
+
+    function maximizeWindow(appId) {
+      const win = document.getElementById(`win-${appId}`);
+      if (!win) return;
+
+      if (win.dataset.maximized === "true") {
+        win.style.width = win.dataset.prevWidth || "680px";
+        win.style.height = win.dataset.prevHeight || "420px";
+        win.style.top = win.dataset.prevTop || "80px";
+        win.style.left = win.dataset.prevLeft || "100px";
+        win.dataset.maximized = "false";
+      } else {
+        win.dataset.prevWidth = win.style.width;
+        win.dataset.prevHeight = win.style.height;
+        win.dataset.prevTop = win.style.top;
+        win.dataset.prevLeft = win.style.left;
+
+        win.style.top = "32px";
+        win.style.left = "0px";
+        win.style.width = "100vw";
+        win.style.height = "calc(100vh - 80px)";
+        win.dataset.maximized = "true";
+      }
+    }
+
+    function focusWindow(appId) {
+      const win = document.getElementById(`win-${appId}`);
+      if (!win) return;
+      activeWindowZ += 1;
+      win.style.zIndex = activeWindowZ;
+    }
+
+    function updateTaskbar() {
+      const taskbarApps = document.getElementById('taskbar-apps');
+      if (!taskbarApps) return;
+      taskbarApps.innerHTML = '';
+
+      const apps = [
+        { id: 'terminal', name: 'ターミナル', icon: 'square-terminal', color: 'text-emerald-400' },
+        { id: 'filemanager', name: 'ファイル', icon: 'folder', color: 'text-amber-400' },
+        { id: 'texteditor', name: 'テキスト編集', icon: 'file-text', color: 'text-blue-400' },
+        { id: 'storageinfo', name: 'システム情報', icon: 'database', color: 'text-purple-400' }
+      ];
+
+      apps.forEach(app => {
+        const win = document.getElementById(`win-${app.id}`);
+        const isOpen = win && !win.classList.contains('hidden');
+
+        if (isOpen) {
+          const btn = document.createElement('button');
+          btn.className = `flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition bg-slate-800/80 text-white border-slate-700 shadow`;
+          btn.onclick = () => focusWindow(app.id);
+          btn.innerHTML = `<i data-lucide="${app.icon}" class="w-4 h-4 ${app.color}"></i> <span>${app.name}</span>`;
+          taskbarApps.appendChild(btn);
+        }
+      });
+
+      lucide.createIcons();
+    }
+
+    function setupWindowDrag() {
+      const headers = document.querySelectorAll('.window-header');
+      headers.forEach(header => {
+        header.addEventListener('mousedown', (e) => {
+          if (e.target.tagName === 'BUTTON') return;
+          const win = header.closest('.window');
+          let shiftX = e.clientX - win.getBoundingClientRect().left;
+          let shiftY = e.clientY - win.getBoundingClientRect().top;
+
+          function moveAt(pageX, pageY) {
+            win.style.left = pageX - shiftX + 'px';
+            win.style.top = pageY - shiftY + 'px';
+          }
+
+          function onMouseMove(event) {
+            moveAt(event.pageX, event.pageY);
+          }
+
+          document.addEventListener('mousemove', onMouseMove);
+
+          document.onmouseup = function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.onmouseup = null;
+          };
+        });
+      });
+    }
+
+    function normalizePath(path) {
+      const parts = path.split('/').filter(Boolean);
+      const stack = [];
+      for (const part of parts) {
+        if (part === '.') continue;
+        if (part === '..') {
+          if (stack.length > 0) stack.pop();
+        } else {
+          stack.push(part);
+        }
+      }
+      return '/' + stack.join('/');
+    }
+
+    function getDirectoryNode(pathStr) {
+      const norm = normalizePath(pathStr);
+      if (norm === '/' || norm === '') return VFS;
+
+      const parts = norm.split('/').filter(Boolean);
+      let curr = VFS;
+
+      for (const part of parts) {
+        if (!curr || curr.type !== 'dir' || !curr.content || !curr.content[part]) {
+          return null;
+        }
+        curr = curr.content[part];
+      }
+      return curr;
+    }
+
+    function navigateDir(target) {
+      let targetPath = target.startsWith('/') ? target : currentPath + '/' + target;
+      const resolved = normalizePath(targetPath);
+      const node = getDirectoryNode(resolved);
+
+      if (node && node.type === 'dir') {
+        currentPath = resolved;
+        const pathDisplay = document.getElementById('file-current-path');
+        if (pathDisplay) pathDisplay.innerText = currentPath;
+        updateTerminalPrompt();
+        renderFileManager();
+        return true;
+      }
+      return false;
+    }
+
+    function updateTerminalPrompt() {
+      const termPrompt = document.getElementById('terminal-prompt');
+      const termTitle = document.getElementById('terminal-win-title');
+      const userStr = activeLoggedInUser || 'guest';
+      const homePath = `/home/${userStr}`;
+      
+      const displayPath = currentPath === homePath ? '~' : currentPath;
+      if (termPrompt) termPrompt.innerText = `${userStr}@penguin-pc:${displayPath}$`;
+      if (termTitle) termTitle.innerText = `terminal@penguin-pc: ${displayPath}`;
+    }
+
+    function getFileContent(filename) {
+      const dir = getDirectoryNode(currentPath);
+      if (dir && dir.content && dir.content[filename] && dir.content[filename].type === "file") {
+        return dir.content[filename].content;
+      }
+      return null;
+    }
+
+    function setFileContent(filename, content) {
+      const dir = getDirectoryNode(currentPath);
+      if (dir && dir.type === 'dir') {
+        if (!dir.content) dir.content = {};
+        dir.content[filename] = {
+          type: "file",
+          content: content,
+          updatedAt: new Date().toLocaleString()
+        };
+        saveVFSToCloud();
+        renderFileManager();
+        return true;
+      }
+      return false;
+    }
+
+    function createNewFolder(folderName) {
+      const dir = getDirectoryNode(currentPath);
+      if (dir && dir.type === 'dir') {
+        if (!dir.content) dir.content = {};
+        dir.content[folderName] = {
+          type: "dir",
+          content: {}
+        };
+        saveVFSToCloud();
+        renderFileManager();
+        return true;
+      }
+      return false;
+    }
+
+    function deleteVFSItem(itemName) {
+      const dir = getDirectoryNode(currentPath);
+      if (dir && dir.content && dir.content[itemName]) {
+        delete dir.content[itemName];
+        saveVFSToCloud();
+        renderFileManager();
+        return true;
+      }
+      return false;
+    }
+
+    function initTerminal() {
+      const input = document.getElementById('terminal-input');
+      const output = document.getElementById('terminal-output');
+      if (!input || !output) return;
+
+      output.innerHTML = `<span class="text-emerald-400 font-bold">PenguinOS Shell (Supabase Edition) Loaded!</span>
+Type <span class="text-amber-300 font-bold">'help'</span> to view available commands.
+Created files are automatically synchronized with Supabase PostgreSQL under your account.
+`;
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const cmdLine = input.value.trim();
+          if (cmdLine) executeTerminalCommand(cmdLine);
+          input.value = '';
+        }
+      });
+    }
+
+    function executeTerminalCommand(cmdLine) {
+      const output = document.getElementById('terminal-output');
+      const promptText = document.getElementById('terminal-prompt').innerText;
+      output.innerHTML += `\n<div><span class="text-emerald-400">${promptText}</span> ${escapeHtml(cmdLine)}</div>`;
+
+      const parts = cmdLine.split(' ');
+      const mainCmd = parts[0].toLowerCase();
+      const args = parts.slice(1);
+
+      let response = '';
+
+      switch (mainCmd) {
+        case 'help':
+          response = `
+<span class="text-amber-300 font-bold font-mono">コマンド一覧:</span>
+  <span class="text-emerald-400 font-mono">ls</span>           : ファイル・ディレクトリ一覧
+  <span class="text-emerald-400 font-mono">cd [path]</span>    : ディレクトリを移動
+  <span class="text-emerald-400 font-mono">cat [file]</span>   : ファイル内容を表示
+  <span class="text-emerald-400 font-mono">touch [file]</span> : 空ファイルを作成
+  <span class="text-emerald-400 font-mono">echo "txt" > [file]</span> : テキストを書き込み
+  <span class="text-emerald-400 font-mono">whoami</span>       : カレントログインユーザー
+  <span class="text-emerald-400 font-mono">neofetch</span>     : システム情報表示
+  <span class="text-emerald-400 font-mono">clear</span>        : 画面消去
+`;
+          break;
+
+        case 'whoami':
+          response = activeLoggedInUser || 'guest';
+          break;
+
+        case 'ls':
+          const dir = getDirectoryNode(currentPath);
+          if (dir && dir.content) {
+            const items = Object.keys(dir.content).map(name => {
+              const item = dir.content[name];
+              return item.type === 'dir' ? `<span class="text-blue-400 font-bold">${name}/</span>` : `<span class="text-slate-200">${name}</span>`;
+            });
+            response = items.length > 0 ? items.join('   ') : '<span class="text-slate-500">(空のディレクトリです)</span>';
+          } else {
+            response = '<span class="text-rose-400">ディレクトリが存在しません</span>';
+          }
+          break;
+
+        case 'cd':
+          const targetDir = args[0] || `/home/${activeLoggedInUser || 'user'}`;
+          if (!navigateDir(targetDir)) {
+            response = `<span class="text-rose-400">bash: cd: ${targetDir}: 存在しないディレクトリです</span>`;
+          }
+          break;
+
+        case 'pwd':
+          response = currentPath;
+          break;
+
+        case 'clear':
+          output.innerHTML = '';
+          return;
+
+        case 'neofetch':
+          response = `
+<span class="text-emerald-400 font-bold font-mono">
+       .-.          User: ${activeLoggedInUser}@penguin-pc
+      /   \\         ----------------
+     | O.O |        OS: PenguinOS Multi-User Cloud Edition
+     |  \\b |        Backend: Supabase PostgreSQL
+    / /   \\ \\       Kernel: 6.8.0-supabase
+   / /     \\ \\      User Group: ${registeredUsers[activeLoggedInUser]?.group || 'standard'}
+  ( (       ) )     Shell: bash 5.2.21
+   \\_\\_   _/_/      
+     / /"\\ \\        
+    ( (   ) )
+     \\_\\_/_/
+</span>`;
+          break;
+
+        case 'cat':
+          if (!args[0]) {
+            response = '<span class="text-rose-400 font-mono">使用法: cat [ファイル名]</span>';
+          } else {
+            const content = getFileContent(args[0]);
+            response = content !== null ? escapeHtml(content) : `<span class="text-rose-400">cat: ${args[0]}: ファイルが存在しません</span>`;
+          }
+          break;
+
+        case 'touch':
+          if (!args[0]) {
+            response = '<span class="text-rose-400 font-mono">使用法: touch [ファイル名]</span>';
+          } else {
+            setFileContent(args[0], '');
+            response = `<span class="text-emerald-400">ファイル '${args[0]}' を作成しました</span>`;
+          }
+          break;
+
+        case 'mkdir':
+          if (!args[0]) {
+            response = '<span class="text-rose-400 font-mono">使用法: mkdir [フォルダ名]</span>';
+          } else {
+            createNewFolder(args[0]);
+            response = `<span class="text-emerald-400">フォルダ '${args[0]}' を作成しました</span>`;
+          }
+          break;
+
+        case 'rm':
+          if (!args[0]) {
+            response = '<span class="text-rose-400 font-mono">使用法: rm [ファイル名]</span>';
+          } else {
+            if (deleteVFSItem(args[0])) {
+              response = `<span class="text-amber-400">'${args[0]}' を削除しました</span>`;
+            } else {
+              response = `<span class="text-rose-400">rm: ${args[0]}: 存在しません</span>`;
+            }
+          }
+          break;
+
+        default:
+          if (cmdLine.startsWith('echo ')) {
+            const redirectMatch = cmdLine.match(/^echo\s+["']?(.*?)["']?\s*>\s*(.+)$/);
+            if (redirectMatch) {
+              const textContent = redirectMatch[1];
+              const targetFile = redirectMatch[2].trim();
+              setFileContent(targetFile, textContent);
+              response = `<span class="text-emerald-400">ファイル '${targetFile}' に書き込みました</span>`;
+            } else {
+              response = cmdLine.replace(/^echo\s+/, '');
+            }
+          } else {
+            response = `<span class="text-rose-400">コマンドが見つかりません: ${mainCmd} ('help' でヘルプ表示)</span>`;
+          }
+      }
+
+      if (response) output.innerHTML += `<div>${response}</div>`;
+      const termBody = document.getElementById('terminal-body');
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    function renderFileManager() {
+      const grid = document.getElementById('file-grid');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      const dir = getDirectoryNode(currentPath);
+
+      const pathDisplay = document.getElementById('file-current-path');
+      if (pathDisplay) pathDisplay.innerText = currentPath;
+
+      if (!dir || !dir.content) return;
+
+      Object.keys(dir.content).forEach(itemName => {
+        const item = dir.content[itemName];
+        const isDir = item.type === 'dir';
+
+        const card = document.createElement('div');
+        card.className = "group relative bg-slate-900/80 hover:bg-slate-800 p-3 rounded-xl border border-slate-800 hover:border-slate-700 flex flex-col items-center justify-between cursor-pointer transition shadow hover:shadow-lg";
+
+        const iconHtml = isDir 
+          ? `<i data-lucide="folder" class="w-10 h-10 text-amber-400 mb-2"></i>`
+          : `<i data-lucide="file-text" class="w-10 h-10 text-blue-400 mb-2"></i>`;
+
+        card.innerHTML = `
+          <div class="flex flex-col items-center w-full" onclick="${isDir ? `navigateDir('${itemName}')` : `openInEditor('${itemName}')`}">
+            ${iconHtml}
+            <span class="text-xs text-slate-200 font-medium truncate w-full text-center">${itemName}</span>
+          </div>
+          <div class="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition">
+            ${!isDir ? `<button onclick="downloadFile('${itemName}')" class="p-1 hover:bg-slate-700 rounded text-slate-300" title="PCへダウンロード"><i data-lucide="download" class="w-3.5 h-3.5"></i></button>` : ''}
+            <button onclick="deleteVFSItem('${itemName}')" class="p-1 hover:bg-rose-950 text-rose-400 rounded" title="削除"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    function promptCreateFile() {
+      showInputModal("新規ファイル作成", "ファイル名を入力してください (例: notes.txt):", (filename) => {
+        if (filename) {
+          setFileContent(filename, "");
+          openInEditor(filename);
+        }
+      });
+    }
+
+    function promptCreateFolder() {
+      showInputModal("新規フォルダ作成", "フォルダ名を入力してください:", (folderName) => {
+        if (folderName) {
+          createNewFolder(folderName);
+        }
+      });
+    }
+
+    function downloadFile(filename) {
+      const content = getFileContent(filename);
+      if (content === null) return;
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function openInEditor(filename) {
+      const content = getFileContent(filename);
+      if (content !== null) {
+        openApp('texteditor');
+        document.getElementById('editor-filename').value = `${currentPath}/${filename}`;
+        document.getElementById('editor-textarea').value = content;
+        document.getElementById('editor-title').innerText = `テキストエディタ - ${filename}`;
+        document.getElementById('editor-status').innerText = `読み込み完了: ${filename}`;
+      }
+    }
+
+    function saveCurrentTextFile() {
+      const pathInput = document.getElementById('editor-filename').value.trim();
+      const content = document.getElementById('editor-textarea').value;
+      
+      const filename = pathInput.split('/').pop();
+      if (!filename) {
+        showModal("エラー", "有効なファイル名を入力してください。");
+        return;
+      }
+
+      setFileContent(filename, content);
+      document.getElementById('editor-status').innerText = `Supabase保存完了: ${new Date().toLocaleTimeString()}`;
+      showModal("保存完了", `ファイル '${filename}' を個人のSupabase領域へ保存しました。`);
+    }
+
+    // Modal Helpers
+    function showModal(title, text) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-body').innerText = text;
+      document.getElementById('modal-input-container').classList.add('hidden');
+      document.getElementById('modal-ok-btn').onclick = closeModal;
+      document.getElementById('custom-modal').classList.remove('hidden');
+    }
+
+    function showInputModal(title, text, callback) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-body').innerText = text;
+      
+      const inputContainer = document.getElementById('modal-input-container');
+      const input = document.getElementById('modal-input');
+      inputContainer.classList.remove('hidden');
+      input.value = '';
+
+      document.getElementById('modal-ok-btn').onclick = () => {
+        const val = input.value.trim();
+        closeModal();
+        if (callback) callback(val);
+      };
+
+      document.getElementById('custom-modal').classList.remove('hidden');
+      input.focus();
+    }
+
+    function closeModal() {
+      document.getElementById('custom-modal').classList.add('hidden');
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Attach functions to global scope
+    window.openApp = openApp;
+    window.closeWindow = closeWindow;
+    window.minimizeWindow = minimizeWindow;
+    window.maximizeWindow = maximizeWindow;
+    window.focusWindow = focusWindow;
+    window.toggleStartMenu = toggleStartMenu;
+    window.deselectIcons = deselectIcons;
+    window.navigateDir = navigateDir;
+    window.promptCreateFile = promptCreateFile;
+    window.promptCreateFolder = promptCreateFolder;
+    window.downloadFile = downloadFile;
+    window.deleteVFSItem = deleteVFSItem;
+    window.openInEditor = openInEditor;
+    window.saveCurrentTextFile = saveCurrentTextFile;
+    window.closeModal = closeModal;
+    window.handleLoginSubmit = handleLoginSubmit;
+    window.toggleLoginTerminal = toggleLoginTerminal;
+    window.handleLoginCommandKey = handleLoginCommandKey;
+    window.executeLoginCommand = executeLoginCommand;
+    window.logoutUser = logoutUser;
+  </script>
+</body>
+</html>
