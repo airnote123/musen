@@ -1,1728 +1,1881 @@
 <!DOCTYPE html>
 <html lang="ja" class="h-full select-none">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PenguinOS - Advanced Multi-User Linux Web OS v4.5</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS Client library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      overflow: hidden;
-      user-select: none;
-    }
-    .font-mono {
-      font-family: 'Fira Code', monospace;
-    }
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.4);
-    }
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    .glass-bar {
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(16px);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    /* Window Resize Handles */
-    .resize-handle {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 14px;
-      height: 14px;
-      cursor: se-resize;
-    }
-    /* Custom Wallpapers Presets */
-    .wp-emerald { background-image: radial-gradient(circle at 50% 30%, #064e3b 0%, #090d16 100%); }
-    .wp-cyberpunk { background-image: linear-gradient(135deg, #2b1055 0%, #7597de 100%); }
-    .wp-midnight { background-image: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); }
-    .wp-sunset { background-image: linear-gradient(to right, #434343 0%, #000000 100%); }
-    .wp-neon { background-image: linear-gradient(135deg, #050515 0%, #4a00e0 50%, #8e2de2 100%); }
-    .wp-aurora { background-image: linear-gradient(to top, #09203f 0%, #537895 100%); }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>PenguinOS - Advanced Multi-User Linux Web OS v4.5</title>
+ 
+ <!-- Tailwind CSS -->
+ <script src="https://cdn.tailwindcss.com"></script>
+ <!-- Lucide Icons -->
+ <script src="https://unpkg.com/lucide@latest"></script>
+ <!-- Supabase JS Client library -->
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <!-- Google Fonts -->
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ 
+ <style>
+ body {
+ font-family: 'Inter', sans-serif;
+ overflow: hidden;
+ user-select: none;
+ }
+ .font-mono {
+ font-family: 'Fira Code', monospace;
+ }
+ /* Custom Scrollbar */
+ ::-webkit-scrollbar {
+ width: 6px;
+ height: 6px;
+ }
+ ::-webkit-scrollbar-track {
+ background: rgba(0, 0, 0, 0.2);
+ }
+ ::-webkit-scrollbar-thumb {
+ background: rgba(255, 255, 255, 0.2);
+ border-radius: 3px;
+ }
+ ::-webkit-scrollbar-thumb:hover {
+ background: rgba(255, 255, 255, 0.4);
+ }
+ .glass-panel {
+ background: rgba(15, 23, 42, 0.88);
+ backdrop-filter: blur(16px);
+ -webkit-backdrop-filter: blur(16px);
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ }
+ .glass-bar {
+ background: rgba(15, 23, 42, 0.92);
+ backdrop-filter: blur(16px);
+ border-top: 1px solid rgba(255, 255, 255, 0.1);
+ }
+ /* Window Resize Handles */
+ .resize-handle {
+ position: absolute;
+ right: 0;
+ bottom: 0;
+ width: 14px;
+ height: 14px;
+ cursor: se-resize;
+ }
+ /* Custom Wallpapers Presets */
+ .wp-emerald { background-image: radial-gradient(circle at 50% 30%, #064e3b 0%, #090d16 100%); }
+ .wp-cyberpunk { background-image: linear-gradient(135deg, #2b1055 0%, #7597de 100%); }
+ .wp-midnight { background-image: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); }
+ .wp-sunset { background-image: linear-gradient(to right, #434343 0%, #000000 100%); }
+ .wp-neon { background-image: linear-gradient(135deg, #050515 0%, #4a00e0 50%, #8e2de2 100%); }
+ .wp-aurora { background-image: linear-gradient(to top, #09203f 0%, #537895 100%); }
 
-    /* Toast Animation */
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    .toast-anim {
-      animation: slideInRight 0.3s ease-out forwards;
-    }
-  </style>
+ /* Toast Animation */
+ @keyframes slideInRight {
+ from { transform: translateX(100%); opacity: 0; }
+ to { transform: translateX(0); opacity: 1; }
+ }
+ .toast-anim {
+ animation: slideInRight 0.3s ease-out forwards;
+ }
+ </style>
 </head>
 <body class="h-full bg-slate-900 text-slate-100 relative overflow-hidden">
 
-  <!-- ================================================================= -->
-  <!-- LOGIN / DISPLAY MANAGER OVERLAY -->
-  <!-- ================================================================= -->
-  <div id="login-screen" class="fixed inset-0 z-50 wp-emerald flex flex-col justify-between items-center p-6 select-none transition-all duration-500">
-    
-    <div class="w-full flex justify-between items-center text-xs text-slate-400 font-mono">
-      <div class="flex items-center gap-2">
-        <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
-        <span class="font-bold text-slate-200">PenguinOS Display Manager v4.5</span>
-      </div>
-      <div id="login-clock" class="text-sm text-slate-300 font-bold">00:00:00</div>
-    </div>
-
-    <div class="w-full max-w-md glass-panel p-8 rounded-2xl shadow-2xl border border-slate-700/60 flex flex-col items-center space-y-6">
-      <div class="relative">
-        <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg border-2 border-white/20">
-          <i data-lucide="user" class="w-10 h-10 text-white"></i>
-        </div>
-        <span id="login-status-dot" class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-slate-900 animate-pulse"></span>
-      </div>
-
-      <div class="text-center">
-        <h1 class="text-xl font-bold text-white tracking-wide" id="selected-user-display">ユーザーを選択してください</h1>
-        <p class="text-xs text-slate-400 mt-1" id="login-subtext">Supabase DB 連動中</p>
-      </div>
-
-      <div id="login-user-list-container" class="w-full space-y-2 max-h-36 overflow-y-auto pr-1"></div>
-
-      <form id="login-form" onsubmit="handleLoginSubmit(event)" class="w-full space-y-4">
-        <div class="relative">
-          <input type="password" id="login-password" placeholder="パスワードを入力..." 
-                 class="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
-          <button type="submit" class="absolute right-2 top-2 p-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition">
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-        </div>
-        <div id="login-error-msg" class="text-xs text-rose-400 text-center hidden"></div>
-      </form>
-    </div>
-
-    <div class="w-full max-w-4xl flex items-center justify-between text-xs text-slate-400">
-      <div class="flex items-center gap-3">
-        <button onclick="toggleLoginTerminal()" class="flex items-center gap-2 bg-slate-800/90 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl border border-slate-700 shadow-lg transition active:scale-95">
-          <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
-          <span class="font-bold">プロビジョニングコマンド</span>
-        </button>
-      </div>
-
-      <div class="text-[11px] font-mono text-slate-500">
-        PenguinOS Multi-User Cloud Kernel (Supabase REST Layer)
-      </div>
-    </div>
-
-    <!-- LOGIN TERMINAL MODAL -->
-    <div id="login-terminal-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div class="w-full max-w-2xl bg-slate-950 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[420px]">
-        <div class="h-10 bg-slate-900 px-4 flex items-center justify-between border-b border-slate-800">
-          <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-            <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
-            <span>System User Provisioning Command Line</span>
-          </div>
-          <button onclick="toggleLoginTerminal()" class="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-white">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
-        </div>
-
-        <div class="flex-1 p-4 font-mono text-xs text-slate-200 overflow-y-auto space-y-2" id="login-term-output">
-          <div class="text-emerald-400 font-bold">=== PenguinOS User Administration Prompt ===</div>
-          <div class="text-slate-400">
-            ユーザー作成コマンド:<br>
-            <span class="text-amber-300">net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add</span><br><br>
-            管理者権限付与コマンド:<br>
-            <span class="text-amber-300">net localgroup administrators &lt;ユーザー名&gt; /add</span>
-          </div>
-          <div class="border-b border-slate-800 my-2"></div>
-        </div>
-
-        <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2">
-          <span class="text-emerald-400 font-mono font-bold text-xs">C:\SYSTEM&gt;</span>
-          <input type="text" id="login-term-input" class="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-xs focus:ring-0" 
-                 placeholder="例: net user John MyPass123 /add" autocomplete="off" spellcheck="false" onkeydown="handleLoginCommandKey(event)">
-          <button onclick="executeLoginCommand()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1 rounded font-medium">実行</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ================================================================= -->
-  <!-- MAIN DESKTOP ENVIRONMENT -->
-  <!-- ================================================================= -->
-  <div id="desktop" class="absolute inset-0 bg-cover bg-center flex flex-col justify-between wp-emerald transition-all duration-700">
-    
-    <!-- Top System Bar -->
-    <div class="h-8 w-full glass-bar flex items-center justify-between px-4 text-xs font-medium text-slate-300 z-40 select-none">
-      <div class="flex items-center gap-3 sm:gap-4">
-        <button id="start-menu-btn" onclick="toggleStartMenu()" class="flex items-center gap-1.5 hover:text-white px-2 py-1 rounded transition hover:bg-white/10">
-          <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
-          <span class="font-bold text-slate-100">PenguinOS</span>
-          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30 hidden sm:inline">v4.5</span>
-        </button>
-        <span class="text-slate-600">|</span>
-        <button onclick="openApp('terminal')" class="hover:text-white flex items-center gap-1">
-          <i data-lucide="square-terminal" class="w-3.5 h-3.5 text-slate-400"></i> <span class="hidden sm:inline">ターミナル</span>
-        </button>
-        <button onclick="openApp('filemanager')" class="hover:text-white flex items-center gap-1">
-          <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i> <span class="hidden sm:inline">ファイル</span>
-        </button>
-        <button onclick="openApp('texteditor')" class="hover:text-white flex items-center gap-1">
-          <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-400"></i> <span class="hidden sm:inline">エディタ</span>
-        </button>
-      </div>
-
-      <div class="flex items-center gap-3 sm:gap-4">
-        <div id="cloud-status-badge" class="flex items-center gap-1.5 text-[11px] bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
-          <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span id="cloud-status-text" class="text-slate-300 font-mono hidden md:inline">Supabase 接続中...</span>
-        </div>
-        <span class="text-slate-600">|</span>
-        <div id="active-user-badge" class="flex items-center gap-1 text-emerald-400 font-semibold text-[11px]">
-          <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
-          <span id="active-user-name">Guest</span>
-        </div>
-        <span class="text-slate-600">|</span>
-        <div id="top-clock" class="font-mono text-slate-200">12:00 PM</div>
-      </div>
-    </div>
-
-    <!-- Desktop Workspace Grid Icons -->
-    <div id="workspace" class="flex-1 p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-flow-col md:grid-rows-6 gap-6 justify-start items-start relative z-10 overflow-y-auto" onclick="deselectIcons(event)">
-      
-      <!-- App 1: Terminal -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('terminal'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 shadow-lg flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-          <i data-lucide="square-terminal" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ターミナル</span>
-      </div>
-
-      <!-- App 2: File Manager -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('filemanager'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-amber-950/40 border border-amber-600/30 shadow-lg flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
-          <i data-lucide="folder-open" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ファイル</span>
-      </div>
-
-      <!-- App 3: Text & Code Editor -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('texteditor'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-blue-950/40 border border-blue-600/30 shadow-lg flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
-          <i data-lucide="file-text" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">テキストエディタ</span>
-      </div>
-
-      <!-- App 4: Browser -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('browser'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-cyan-950/40 border border-cyan-600/30 shadow-lg flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
-          <i data-lucide="globe" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ブラウザ</span>
-      </div>
-
-      <!-- App 5: Calculator -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('calculator'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-teal-950/40 border border-teal-600/30 shadow-lg flex items-center justify-center text-teal-400 group-hover:scale-105 transition-transform">
-          <i data-lucide="calculator" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">電卓</span>
-      </div>
-
-      <!-- App 6: System Settings -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('settings'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-600 shadow-lg flex items-center justify-center text-slate-300 group-hover:scale-105 transition-transform">
-          <i data-lucide="settings" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">設定</span>
-      </div>
-
-      <!-- App 7: Storage Info Guide -->
-      <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
-           onclick="openApp('storageinfo'); event.stopPropagation();">
-        <div class="w-12 h-12 rounded-xl bg-purple-950/40 border border-purple-600/30 shadow-lg flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
-          <i data-lucide="database" class="w-7 h-7"></i>
-        </div>
-        <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">DB ガイド</span>
-      </div>
-
-    </div>
-
-    <!-- Start Menu Overlay -->
-    <div id="start-menu" class="hidden absolute bottom-14 left-4 w-80 glass-panel rounded-2xl shadow-2xl z-50 p-4 border border-slate-700/50 flex flex-col gap-3 select-none">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-700/60">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow" id="menu-avatar">
-            U
-          </div>
-          <div>
-            <div class="text-sm font-semibold text-white" id="menu-username">user@penguin-pc</div>
-            <div class="text-xs text-emerald-400 flex items-center gap-1" id="menu-cloud-info">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <span id="menu-group-tag">Standard User</span>
-            </div>
-          </div>
-        </div>
-        <button onclick="logoutUser()" class="p-2 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl transition" title="ログアウト">
-          <i data-lucide="log-out" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="space-y-1">
-        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">アプリケーション</div>
-        <button onclick="openApp('terminal'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
-          <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i> ターミナル (Bash Shell)
-        </button>
-        <button onclick="openApp('filemanager'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
-          <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i> ファイルマネージャー (VFS)
-        </button>
-        <button onclick="openApp('texteditor'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
-          <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i> テキスト / コード エディタ
-        </button>
-        <button onclick="openApp('browser'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
-          <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i> Web ブラウザ
-        </button>
-        <button onclick="openApp('calculator'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
-          <i data-lucide="calculator" class="w-4 h-4 text-teal-400"></i> 電卓
-        </button>
-        <button onclick="openApp('settings'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
-          <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i> システム設定
-        </button>
-      </div>
-    </div>
-
-    <!-- Bottom Taskbar -->
-    <div class="h-12 w-full glass-bar flex items-center justify-between px-4 z-40 shadow-2xl select-none">
-      <div class="flex items-center gap-2">
-        <button id="launcher-icon" onclick="toggleStartMenu()" class="p-2 rounded-xl hover:bg-white/10 text-emerald-400 transition flex items-center justify-center">
-          <i data-lucide="grid" class="w-5 h-5"></i>
-        </button>
-        <div class="h-5 w-px bg-slate-700 mx-1"></div>
-        <div id="taskbar-apps" class="flex items-center gap-1.5 overflow-x-auto"></div>
-      </div>
-
-      <div class="text-xs text-slate-400 font-mono hidden sm:flex items-center gap-3">
-        <span>PenguinOS Linux Kernel 6.8.0</span>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ================================================================= -->
-  <!-- WINDOWS LAYER -->
-  <!-- ================================================================= -->
-  <div id="windows-container" class="absolute inset-0 pointer-events-none z-20">
-
-    <!-- 1. TERMINAL WINDOW -->
-    <div id="win-terminal" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 680px; height: 420px; top: 70px; left: 80px;" onclick="focusWindow('terminal')">
-      <div class="window-header h-9 bg-slate-950/80 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
-          <span id="terminal-win-title">terminal@penguin-pc: ~</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="minimizeWindow('terminal')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
-          <button onclick="maximizeWindow('terminal')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
-          <button onclick="closeWindow('terminal')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-        </div>
-      </div>
-      <div class="flex-1 bg-slate-950/95 p-4 font-mono text-xs sm:text-sm text-slate-200 overflow-y-auto flex flex-col justify-between" id="terminal-body">
-        <div id="terminal-output" class="space-y-1.5 whitespace-pre-wrap"></div>
-        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-900">
-          <span class="text-emerald-400 font-bold" id="terminal-prompt">user@penguin-pc:~$</span>
-          <input type="text" id="terminal-input" class="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-xs sm:text-sm focus:ring-0" autocomplete="off" spellcheck="false" placeholder="コマンドを入力 (例: help, ls, txt, find, sysinfo)">
-        </div>
-      </div>
-      <div class="resize-handle" onmousedown="initResize(event, 'terminal')"></div>
-    </div>
-
-    <!-- 2. FILE MANAGER WINDOW -->
-    <div id="win-filemanager" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 720px; height: 460px; top: 90px; left: 140px;" onclick="focusWindow('filemanager')">
-      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i>
-          <span>ファイルマネージャー - Supabase VFS</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="minimizeWindow('filemanager')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
-          <button onclick="maximizeWindow('filemanager')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
-          <button onclick="closeWindow('filemanager')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-        </div>
-      </div>
-      <div class="h-10 bg-slate-900/50 px-3 flex items-center justify-between border-b border-slate-800 text-xs">
-        <div class="flex items-center gap-2">
-          <button onclick="navigateDir('..')" class="p-1 rounded hover:bg-white/10 text-slate-300" title="親フォルダへ">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-          </button>
-          <div id="file-current-path" class="bg-slate-950 px-2.5 py-1 rounded border border-slate-800 font-mono text-slate-300 min-w-[180px]">
-            /home/user
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="promptCreateFile()" class="flex items-center gap-1 bg-emerald-600/80 hover:bg-emerald-500 text-white px-2.5 py-1 rounded font-medium transition">
-            <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> 新規ファイル
-          </button>
-          <button onclick="promptCreateFolder()" class="flex items-center gap-1 bg-amber-600/80 hover:bg-amber-500 text-white px-2.5 py-1 rounded font-medium transition">
-            <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i> 新規フォルダ
-          </button>
-        </div>
-      </div>
-      <div class="flex-1 p-4 bg-slate-950/60 overflow-y-auto">
-        <div id="file-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
-      </div>
-      <div class="resize-handle" onmousedown="initResize(event, 'filemanager')"></div>
-    </div>
-
-    <!-- 3. TEXT & CODE EDITOR WINDOW -->
-    <div id="win-texteditor" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 760px; height: 500px; top: 80px; left: 180px;" onclick="focusWindow('texteditor')">
-      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i>
-          <span id="editor-title">テキスト / コード エディタ - (新規テキスト)</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="minimizeWindow('texteditor')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
-          <button onclick="maximizeWindow('texteditor')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
-          <button onclick="closeWindow('texteditor')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-        </div>
-      </div>
-      <div class="h-10 bg-slate-900/50 px-3 flex items-center justify-between border-b border-slate-800 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="text-slate-400 font-mono text-[11px]">ファイル名:</span>
-          <input type="text" id="editor-filename" value="note.txt" class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-mono text-xs w-48 outline-none focus:border-blue-500">
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="runCodeInEditor()" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium transition shadow">
-            <i data-lucide="play" class="w-3.5 h-3.5"></i> 実行/プレビュー
-          </button>
-          <button onclick="saveCurrentTextFile()" class="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded font-medium transition shadow">
-            <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i> 保存
-          </button>
-        </div>
-      </div>
-      <div class="flex-1 flex flex-col md:flex-row bg-slate-950/90 overflow-hidden">
-        <!-- Text Area -->
-        <div class="flex-1 relative flex flex-col">
-          <textarea id="editor-textarea" class="w-full h-full bg-transparent text-slate-100 font-mono text-xs sm:text-sm p-3 outline-none resize-none" 
-                    placeholder="ここにテキスト（.txt）や JavaScript/HTML コードを入力してください..."></textarea>
-        </div>
-        <!-- Output Preview Panel -->
-        <div id="editor-preview-container" class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-800 bg-slate-900 flex flex-col hidden">
-          <div class="h-7 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 border-b border-slate-800">
-            <span>実行プレビュー / コンソール</span>
-            <div class="flex items-center gap-2">
-              <button onclick="clearEditorConsole()" class="hover:text-amber-400" title="ログ消去"><i data-lucide="eraser" class="w-3.5 h-3.5"></i></button>
-              <button onclick="toggleEditorPreview()" class="hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-            </div>
-          </div>
-          <iframe id="editor-iframe" class="flex-1 w-full bg-white text-slate-900 border-none"></iframe>
-          <div id="editor-console-output" class="h-28 bg-slate-950 p-2 font-mono text-[11px] text-emerald-400 overflow-y-auto border-t border-slate-800"></div>
-        </div>
-      </div>
-      <div class="h-6 bg-slate-950 px-3 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-900 font-mono">
-        <span id="editor-status">Ready</span>
-        <span>UTF-8 | Plain Text & Code Dynamic Support</span>
-      </div>
-      <div class="resize-handle" onmousedown="initResize(event, 'texteditor')"></div>
-    </div>
-
-    <!-- 4. BROWSER WINDOW -->
-    <div id="win-browser" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 780px; height: 480px; top: 60px; left: 160px;" onclick="focusWindow('browser')">
-      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i>
-          <span>Penguin Navigator (Web Browser)</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="minimizeWindow('browser')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
-          <button onclick="maximizeWindow('browser')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
-          <button onclick="closeWindow('browser')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-        </div>
-      </div>
-      <div class="h-10 bg-slate-900/70 px-3 flex items-center gap-2 border-b border-slate-800 text-xs">
-        <button onclick="reloadBrowser()" class="p-1 hover:bg-white/10 rounded text-slate-300" title="再読み込み"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i></button>
-        <div class="flex-1 flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1">
-          <i data-lucide="lock" class="w-3 h-3 text-emerald-400 mr-2"></i>
-          <input type="text" id="browser-url" value="https://wikipedia.org" class="w-full bg-transparent text-slate-200 outline-none font-mono text-xs" onkeydown="handleBrowserKey(event)">
-        </div>
-        <button onclick="navigateBrowser()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded font-medium transition">移動</button>
-      </div>
-      <div class="h-7 bg-slate-950/80 border-b border-slate-800/80 px-3 flex items-center gap-2 text-[11px]">
-        <span class="text-slate-500">ブックマーク:</span>
-        <button onclick="setBrowserUrl('https://wikipedia.org')" class="hover:text-cyan-300 text-slate-300">Wikipedia</button>
-        <span class="text-slate-700">|</span>
-        <button onclick="setBrowserUrl('https://bing.com')" class="hover:text-cyan-300 text-slate-300">Bing</button>
-        <span class="text-slate-700">|</span>
-        <button onclick="setBrowserUrl('https://duckduckgo.com')" class="hover:text-cyan-300 text-slate-300">DuckDuckGo</button>
-      </div>
-      <div class="flex-1 bg-white relative">
-        <iframe id="browser-iframe" src="https://wikipedia.org" class="w-full h-full border-none"></iframe>
-      </div>
-      <div class="resize-handle" onmousedown="initResize(event, 'browser')"></div>
-    </div>
-
-    <!-- 5. CALCULATOR WINDOW -->
-    <div id="win-calculator" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 280px; height: 380px; top: 120px; left: 300px;" onclick="focusWindow('calculator')">
-      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="calculator" class="w-4 h-4 text-teal-400"></i>
-          <span>電卓</span>
-        </div>
-        <button onclick="closeWindow('calculator')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-      </div>
-      <div class="p-3 bg-slate-950 flex-1 flex flex-col justify-between">
-        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-right">
-          <div id="calc-history" class="text-[10px] text-slate-500 font-mono h-4"></div>
-          <div id="calc-display" class="text-2xl font-mono text-emerald-400 font-bold overflow-hidden text-ellipsis">0</div>
-        </div>
-
-        <div class="grid grid-cols-4 gap-2 mt-3 font-mono text-xs">
-          <button onclick="calcPress('C')" class="p-2.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg font-bold">C</button>
-          <button onclick="calcPress('(')" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">(</button>
-          <button onclick="calcPress(')')" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">)</button>
-          <button onclick="calcPress('/')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">/</button>
-
-          <button onclick="calcPress('7')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">7</button>
-          <button onclick="calcPress('8')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">8</button>
-          <button onclick="calcPress('9')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">9</button>
-          <button onclick="calcPress('*')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">*</button>
-
-          <button onclick="calcPress('4')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">4</button>
-          <button onclick="calcPress('5')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">5</button>
-          <button onclick="calcPress('6')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">6</button>
-          <button onclick="calcPress('-')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">-</button>
-
-          <button onclick="calcPress('1')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">1</button>
-          <button onclick="calcPress('2')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">2</button>
-          <button onclick="calcPress('3')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">3</button>
-          <button onclick="calcPress('+')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">+</button>
-
-          <button onclick="calcPress('0')" class="col-span-2 p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">0</button>
-          <button onclick="calcPress('.')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg">.</button>
-          <button onclick="calcPress('=')" class="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold">=</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 6. SETTINGS WINDOW -->
-    <div id="win-settings" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 600px; height: 460px; top: 110px; left: 240px;" onclick="focusWindow('settings')">
-      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i>
-          <span>システム設定</span>
-        </div>
-        <button onclick="closeWindow('settings')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-      </div>
-      <div class="flex-1 bg-slate-950 p-5 overflow-y-auto space-y-5 text-xs text-slate-300">
-        <div>
-          <h4 class="font-bold text-white mb-2 flex items-center gap-2">
-            <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i> 壁紙テーマの選択
-          </h4>
-          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            <button onclick="setWallpaper('wp-emerald')" class="h-14 rounded-xl wp-emerald border-2 border-emerald-500 flex items-center justify-center font-semibold text-white text-[11px] shadow">
-              Emerald
-            </button>
-            <button onclick="setWallpaper('wp-cyberpunk')" class="h-14 rounded-xl wp-cyberpunk border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
-              Cyberpunk
-            </button>
-            <button onclick="setWallpaper('wp-midnight')" class="h-14 rounded-xl wp-midnight border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
-              Midnight
-            </button>
-            <button onclick="setWallpaper('wp-sunset')" class="h-14 rounded-xl wp-sunset border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
-              Monochrome
-            </button>
-            <button onclick="setWallpaper('wp-neon')" class="h-14 rounded-xl wp-neon border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
-              Neon
-            </button>
-            <button onclick="setWallpaper('wp-aurora')" class="h-14 rounded-xl wp-aurora border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
-              Aurora
-            </button>
-          </div>
-
-          <div class="mt-3 flex items-center gap-2">
-            <input type="text" id="custom-wallpaper-url" placeholder="カスタム壁紙画像URL (https://...)" 
-                   class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 outline-none focus:border-emerald-500 font-mono text-xs">
-            <button onclick="setCustomWallpaper()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium transition">適用</button>
-          </div>
-        </div>
-
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-          <h4 class="font-bold text-white flex items-center gap-2">
-            <i data-lucide="user-check" class="w-4 h-4 text-amber-400"></i> アカウント情報
-          </h4>
-          <div class="grid grid-cols-2 gap-2 text-slate-400">
-            <div>ユーザー名: <span id="settings-username" class="text-white font-mono">Guest</span></div>
-            <div>グループ: <span id="settings-group" class="text-emerald-400 font-mono">Standard</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7. STORAGE & SYSTEM INFO WINDOW -->
-    <div id="win-storageinfo" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
-         style="width: 620px; height: 440px; top: 140px; left: 180px;" onclick="focusWindow('storageinfo')">
-      <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <i data-lucide="database" class="w-4 h-4 text-purple-400"></i>
-          <span>マルチユーザー & Supabase ガイド</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="minimizeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
-          <button onclick="maximizeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
-          <button onclick="closeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
-        </div>
-      </div>
-      <div class="flex-1 p-5 bg-slate-950/90 text-slate-300 text-xs sm:text-sm overflow-y-auto space-y-4">
-        <div class="p-3.5 bg-emerald-950/30 border border-emerald-500/30 rounded-xl">
-          <h3 class="font-bold text-emerald-300 text-sm flex items-center gap-2">
-            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Supabase データベース連携完了
-          </h3>
-          <p class="mt-1.5 text-slate-300 leading-relaxed text-xs">
-            本システムは Supabase REST API と PostgREST リアルタイムリスナーに正常接続されています。ユーザーのアカウント作成情報や個別のファイルツリーは Supabase PostgreSQL データベースへ同期されます。
-          </p>
-        </div>
-
-        <div class="space-y-2.5">
-          <h4 class="font-semibold text-white text-xs uppercase tracking-wider text-slate-400">Supabase テーブル構造</h4>
-          
-          <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
-            <div class="font-bold text-emerald-400 flex items-center gap-1.5">
-              <i data-lucide="users" class="w-3.5 h-3.5"></i> public.system_accounts
-            </div>
-            <p class="text-xs text-slate-400 font-mono">
-              Columns: username (PK), password, group_name, created_at
-            </p>
-          </div>
-
-          <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
-            <div class="font-bold text-amber-400 flex items-center gap-1.5">
-              <i data-lucide="folder-lock" class="w-3.5 h-3.5"></i> public.user_vfs
-            </div>
-            <p class="text-xs text-slate-400 font-mono">
-              Columns: user_key (PK), vfs_tree (JSONB), updated_at
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- Custom Modal Dialog -->
-  <div id="custom-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
-      <h3 id="modal-title" class="text-sm font-bold text-white">通知</h3>
-      <div id="modal-body" class="text-xs text-slate-300 whitespace-pre-wrap"></div>
-      <div id="modal-input-container" class="hidden">
-        <input type="text" id="modal-input" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-xs text-white outline-none focus:border-emerald-500">
-      </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button id="modal-cancel-btn" onclick="closeModal()" class="px-3 py-1.5 rounded text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">キャンセル</button>
-        <button id="modal-ok-btn" class="px-3 py-1.5 rounded text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium">OK</button>
-      </div>
-    </div>
-  </div>
-
-
-  <script>
-    // =========================================================================
-    // AUDIO SYNTHESIZER
-    // =========================================================================
-    const AudioEngine = {
-      ctx: null,
-      init() {
-        if (!this.ctx) {
-          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-      },
-      playTone(freq, type, duration) {
-        try {
-          this.init();
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = type || 'sine';
-          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-          gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start();
-          osc.stop(this.ctx.currentTime + duration);
-        } catch(e) {}
-      },
-      playLoginSound() {
-        setTimeout(() => this.playTone(523.25, 'sine', 0.2), 0);
-        setTimeout(() => this.playTone(659.25, 'sine', 0.2), 150);
-        setTimeout(() => this.playTone(783.99, 'sine', 0.4), 300);
-      },
-      playClickSound() {
-        this.playTone(800, 'triangle', 0.05);
-      },
-      playErrorSound() {
-        this.playTone(180, 'sawtooth', 0.2);
-      }
-    };
-
-    // Helper Utility: Safe HTML Escape
-    function escapeHtml(text) {
-      if (typeof text !== 'string') return text;
-      return text.replace(/[&<>"']/g, function(m) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-      });
-    }
-
-    // Modal Utility
-    let modalCallback = null;
-    function showInputModal(title, message, callback) {
-      document.getElementById('modal-title').innerText = title;
-      document.getElementById('modal-body').innerText = message;
-      const inputContainer = document.getElementById('modal-input-container');
-      const input = document.getElementById('modal-input');
-      inputContainer.classList.remove('hidden');
-      input.value = '';
-      
-      const modal = document.getElementById('custom-modal');
-      modal.classList.remove('hidden');
-      input.focus();
-
-      modalCallback = callback;
-      
-      document.getElementById('modal-ok-btn').onclick = () => {
-        const val = input.value.trim();
-        closeModal();
-        if (modalCallback) modalCallback(val);
-      };
-    }
-
-    function closeModal() {
-      document.getElementById('custom-modal').classList.add('hidden');
-      document.getElementById('modal-input-container').classList.add('hidden');
-    }
-
-    // =========================================================================
-    // TOAST NOTIFICATION SYSTEM
-    // =========================================================================
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
-      if (!container) return;
-
-      const toast = document.createElement('div');
-      const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info';
-      const borderColor = type === 'success' ? 'border-emerald-500' : type === 'error' ? 'border-rose-500' : 'border-blue-500';
-
-      toast.className = `toast-anim pointer-events-auto bg-slate-900/95 text-xs text-white px-3.5 py-2.5 rounded-xl border ${borderColor} shadow-xl flex items-center gap-2.5 min-w-[220px]`;
-      toast.innerHTML = `
-        <i data-lucide="${icon}" class="w-4 h-4 ${type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-rose-400' : 'text-blue-400'}"></i>
-        <span>${message}</span>
-      `;
-
-      container.appendChild(toast);
-      lucide.createIcons();
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    }
-
-    // =========================================================================
-    // SUPABASE CONFIGURATION
-    // =========================================================================
-    const SUPABASE_URL = "https://qfzyrogwyjbzbblnvqzy.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw";
-
-    let supabaseClient = null;
-
-    const DEFAULT_VFS = {
-      "type": "dir",
-      "content": {
-        "home": {
-          "type": "dir",
-          "content": {
-            "user": {
-              "type": "dir",
-              "content": {
-                "welcome.txt": { type: "file", content: "PenguinOS Multi-User Supabase Cloud OS へようこそ！\n\n- 個別ストレージ(Supabase PostgreSQL JSONB)へ同期されています。\n- 他のユーザーとデータが混ざりません。\n- テキストエディタ、ブラウザ、電卓などの機能が利用可能です。", updatedAt: new Date().toLocaleString() },
-                "sample.js": { type: "file", content: "// JavaScript実行サンプル\nconsole.log('PenguinOS Shell Operational!');\nalert('Welcome to PenguinOS JavaScript Engine!');", updatedAt: new Date().toLocaleString() },
-                "Documents": { type: "dir", content: {} },
-                "Downloads": { type: "dir", content: {} }
-              }
-            }
-          }
-        }
-      }
-    };
-
-    let VFS = JSON.parse(JSON.stringify(DEFAULT_VFS));
-    let currentPath = "/home/user";
-    let activeWindowZ = 10;
-    
-    let registeredUsers = {};
-    let activeLoggedInUser = null;
-    let selectedLoginUser = null;
-    let isRemoteUpdate = false;
-    let pollTimer = null;
-
-    // Command History for Terminal
-    let cmdHistory = [];
-    let cmdHistoryIndex = -1;
-
-    async function initSupabase() {
-      try {
-        if (typeof supabase !== 'undefined' && supabase.createClient) {
-          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: { persistSession: false }
-          });
-          updateCloudStatusUI("Supabase 接続済み", "text-emerald-400", "bg-emerald-400");
-          await loadAccountsFromSupabase();
-          startPolling();
-        } else {
-          throw new Error("Supabase SDK not loaded.");
-        }
-      } catch (err) {
-        updateCloudStatusUI("オフライン (Local)", "text-amber-400", "bg-amber-400");
-        loadAccountsFromLocal();
-      }
-    }
-
-    async function loadAccountsFromSupabase() {
-      if (!supabaseClient) {
-        loadAccountsFromLocal();
-        return;
-      }
-      try {
-        const { data, error } = await supabaseClient
-          .from('system_accounts')
-          .select('*');
-
-        if (error) throw error;
-
-        if (data) {
-          registeredUsers = {};
-          data.forEach(row => {
-            registeredUsers[row.username] = {
-              password: row.password,
-              group: row.group_name || 'users',
-              createdAt: row.created_at
-            };
-          });
-          saveAccountsToLocal();
-          renderLoginUserList();
-        }
-      } catch (err) {
-        loadAccountsFromLocal();
-      }
-    }
-
-    function startPolling() {
-      if (pollTimer) return;
-      pollTimer = setInterval(() => {
-        loadAccountsFromSupabase();
-        if (activeLoggedInUser) {
-          fetchUserVFSFromSupabase(activeLoggedInUser.toLowerCase());
-        }
-      }, 3000);
-    }
-
-    async function fetchUserVFSFromSupabase(userKey) {
-      if (!supabaseClient) return;
-      try {
-        const { data, error } = await supabaseClient
-          .from('user_vfs')
-          .select('vfs_tree')
-          .eq('user_key', userKey)
-          .maybeSingle();
-
-        if (!error && data && data.vfs_tree && !isRemoteUpdate) {
-          if (JSON.stringify(VFS) !== JSON.stringify(data.vfs_tree)) {
-            VFS = data.vfs_tree;
-            renderFileManager();
-            updateTerminalPrompt();
-          }
-        }
-      } catch (e) {}
-    }
-
-    function loadAccountsFromLocal() {
-      try {
-        const local = localStorage.getItem('penguin_os_accounts_v1');
-        if (local) registeredUsers = JSON.parse(local);
-      } catch(e) {}
-      renderLoginUserList();
-    }
-
-    function saveAccountsToLocal() {
-      try {
-        localStorage.setItem('penguin_os_accounts_v1', JSON.stringify(registeredUsers));
-      } catch(e) {}
-    }
-
-    async function saveAccountToSupabase(username, password, groupName) {
-      saveAccountsToLocal();
-      if (!supabaseClient) return;
-      try {
-        await supabaseClient.from('system_accounts').upsert({
-          username: username,
-          password: password,
-          group_name: groupName,
-          created_at: new Date().toISOString()
-        });
-      } catch (e) {}
-    }
-
-    async function saveVFSToCloud() {
-      if (isRemoteUpdate) return;
-      if (activeLoggedInUser) {
-        try {
-          localStorage.setItem(`penguin_os_vfs_${activeLoggedInUser.toLowerCase()}`, JSON.stringify(VFS));
-        } catch(e) {}
-      }
-      if (!supabaseClient || !activeLoggedInUser) return;
-      try {
-        await supabaseClient.from('user_vfs').upsert({
-          user_key: activeLoggedInUser.toLowerCase(),
-          vfs_tree: VFS,
-          updated_at: new Date().toISOString()
-        });
-      } catch (e) {}
-    }
-
-    function updateCloudStatusUI(text, textColor, dotBg) {
-      const textEl = document.getElementById('cloud-status-text');
-      const dotEl = document.getElementById('cloud-status-dot');
-      if (textEl) {
-        textEl.innerText = text;
-        textEl.className = `font-mono ${textColor}`;
-      }
-      if (dotEl) {
-        dotEl.className = `w-2 h-2 rounded-full ${dotBg} animate-pulse`;
-      }
-    }
-
-    // =========================================================================
-    // LOGIN SCREEN & USER AUTHENTICATION
-    // =========================================================================
-    function renderLoginUserList() {
-      const container = document.getElementById('login-user-list-container');
-      const subtext = document.getElementById('login-subtext');
-      if (!container) return;
-
-      container.innerHTML = '';
-      const userKeys = Object.keys(registeredUsers);
-
-      if (userKeys.length === 0) {
-        subtext.innerText = "登録ユーザーがありません (プロビジョニングから作成可)";
-        document.getElementById('selected-user-display').innerText = "アカウントなし";
-        selectedLoginUser = null;
-        return;
-      }
-
-      subtext.innerText = "ログインするアカウントを選択してください";
-
-      userKeys.forEach(uname => {
-        const uObj = registeredUsers[uname];
-        const btn = document.createElement('button');
-        const isSelected = selectedLoginUser === uname;
-        btn.className = `w-full flex items-center justify-between p-2.5 rounded-xl border transition ${
-          isSelected ? 'bg-emerald-950/60 border-emerald-500/80 text-white shadow-md' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80'
-        }`;
-        
-        btn.onclick = () => selectUserForLogin(uname);
-
-        const isAdmin = uObj.group === 'administrators';
-        btn.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-full ${isAdmin ? 'bg-amber-600' : 'bg-slate-700'} flex items-center justify-center font-bold text-xs text-white">
-              ${uname.charAt(0).toUpperCase()}
-            </div>
-            <div class="text-left">
-              <div class="text-xs font-semibold">${uname}</div>
-              <div class="text-[10px] text-slate-400 font-mono">${isAdmin ? 'Administrators' : 'Users'}</div>
-            </div>
-          </div>
-          ${isSelected ? `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>` : ''}
-        `;
-        container.appendChild(btn);
-      });
-
-      if (!selectedLoginUser && userKeys.length > 0) {
-        selectUserForLogin(userKeys[0]);
-      }
-
-      lucide.createIcons();
-    }
-
-    function selectUserForLogin(uname) {
-      selectedLoginUser = uname;
-      document.getElementById('selected-user-display').innerText = uname;
-      document.getElementById('login-error-msg').classList.add('hidden');
-      renderLoginUserList();
-    }
-
-    function handleLoginSubmit(e) {
-      e.preventDefault();
-      const errEl = document.getElementById('login-error-msg');
-      errEl.classList.add('hidden');
-
-      if (!selectedLoginUser || !registeredUsers[selectedLoginUser]) {
-        errEl.innerText = "ユーザーを選択してください。";
-        errEl.classList.remove('hidden');
-        AudioEngine.playErrorSound();
-        return;
-      }
-
-      const pwdInput = document.getElementById('login-password').value;
-      const targetUser = registeredUsers[selectedLoginUser];
-
-      if (targetUser.password !== pwdInput) {
-        errEl.innerText = "パスワードが正しくありません。";
-        errEl.classList.remove('hidden');
-        AudioEngine.playErrorSound();
-        return;
-      }
-
-      // Successful Login
-      AudioEngine.playLoginSound();
-      activeLoggedInUser = selectedLoginUser;
-      document.getElementById('login-password').value = '';
-      
-      document.getElementById('active-user-name').innerText = activeLoggedInUser;
-      document.getElementById('menu-username').innerText = `${activeLoggedInUser}@penguin-pc`;
-      document.getElementById('menu-avatar').innerText = activeLoggedInUser.charAt(0).toUpperCase();
-      document.getElementById('menu-group-tag').innerText = targetUser.group === 'administrators' ? 'Administrator' : 'Standard User';
-      
-      document.getElementById('settings-username').innerText = activeLoggedInUser;
-      document.getElementById('settings-group').innerText = targetUser.group;
-
-      currentPath = `/home/${activeLoggedInUser}`;
-
-      VFS = {
-        "type": "dir",
-        "content": {
-          "home": {
-            "type": "dir",
-            "content": {
-              [activeLoggedInUser]: {
-                "type": "dir",
-                "content": {
-                  "welcome.txt": { 
-                    type: "file", 
-                    content: `${activeLoggedInUser} さん、PenguinOSへようこそ！\n\n新しく強化されたテキストエディタとターミナル機能をご活用ください。`, 
-                    updatedAt: new Date().toLocaleString() 
-                  },
-                  "Documents": { type: "dir", content: {} },
-                  "Downloads": { type: "dir", content: {} }
-                }
-              }
-            }
-          }
-        }
-      };
-
-      fetchUserVFSFromSupabase(activeLoggedInUser.toLowerCase());
-      renderFileManager();
-      updateTerminalPrompt();
-
-      document.getElementById('login-screen').classList.add('hidden');
-      showToast(`${activeLoggedInUser} としてログインしました`, 'success');
-    }
-
-    function logoutUser() {
-      AudioEngine.playClickSound();
-      activeLoggedInUser = null;
-      document.getElementById('login-screen').classList.remove('hidden');
-      document.getElementById('start-menu').classList.add('hidden');
-      renderLoginUserList();
-      showToast("ログアウトしました", 'info');
-    }
-
-    function toggleLoginTerminal() {
-      AudioEngine.playClickSound();
-      const modal = document.getElementById('login-terminal-modal');
-      modal.classList.toggle('hidden');
-      if (!modal.classList.contains('hidden')) {
-        document.getElementById('login-term-input').focus();
-      }
-    }
-
-    function handleLoginCommandKey(e) {
-      if (e.key === 'Enter') executeLoginCommand();
-    }
-
-    function executeLoginCommand() {
-      const input = document.getElementById('login-term-input');
-      const output = document.getElementById('login-term-output');
-      const cmdStr = input.value.trim();
-      if (!cmdStr) return;
-
-      output.innerHTML += `<div><span class="text-emerald-400">C:\\SYSTEM&gt;</span> ${escapeHtml(cmdStr)}</div>`;
-      input.value = '';
-
-      const parts = cmdStr.split(/\s+/);
-      let resMsg = '';
-
-      if (parts[0].toLowerCase() === 'net') {
-        if (parts[1] && parts[1].toLowerCase() === 'user') {
-          if (parts.length >= 5 && parts[parts.length - 1].toLowerCase() === '/add') {
-            const uname = parts[2];
-            const pass = parts[3];
-            registeredUsers[uname] = { password: pass, group: 'users', createdAt: new Date().toISOString() };
-            saveAccountToSupabase(uname, pass, 'users');
-            renderLoginUserList();
-            resMsg = `<span class="text-emerald-400">ユーザー '${uname}' を作成しました。</span>`;
-          } else {
-            resMsg = `<span class="text-rose-400">構文エラー: net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add</span>`;
-          }
-        } else if (parts[1] && parts[1].toLowerCase() === 'localgroup') {
-          if (parts[2] && parts[2].toLowerCase() === 'administrators' && parts.length >= 5 && parts[parts.length - 1].toLowerCase() === '/add') {
-            const uname = parts[3];
-            if (registeredUsers[uname]) {
-              registeredUsers[uname].group = 'administrators';
-              saveAccountToSupabase(uname, registeredUsers[uname].password, 'administrators');
-              renderLoginUserList();
-              resMsg = `<span class="text-emerald-400">'${uname}' に管理者権限を付与しました。</span>`;
-            } else {
-              resMsg = `<span class="text-rose-400">エラー: ユーザー '${uname}' は存在しません。</span>`;
-            }
-          }
-        }
-      } else if (cmdStr.toLowerCase() === 'cls' || cmdStr.toLowerCase() === 'clear') {
-        output.innerHTML = '';
-        return;
-      } else {
-        resMsg = `<span class="text-rose-400">認識されないコマンドです。</span>`;
-      }
-
-      output.innerHTML += `<div class="mb-2">${resMsg}</div>`;
-      output.scrollTop = output.scrollHeight;
-    }
-
-    // =========================================================================
-    // WINDOW MANAGEMENT & RESIZE LOGIC
-    // =========================================================================
-    window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      updateClock();
-      setInterval(updateClock, 1000);
-      setupWindowDrag();
-      
-      initTerminal();
-      initSupabase();
-
-      // Keyboard Shortcuts
-      window.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 't') {
-          e.preventDefault();
-          openApp('terminal');
-        }
-      });
-    });
-
-    function updateClock() {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const topClock = document.getElementById('top-clock');
-      const loginClock = document.getElementById('login-clock');
-      if (topClock) topClock.innerText = timeStr;
-      if (loginClock) loginClock.innerText = timeStr;
-    }
-
-    function toggleStartMenu() {
-      AudioEngine.playClickSound();
-      const menu = document.getElementById('start-menu');
-      menu.classList.toggle('hidden');
-    }
-
-    function deselectIcons(e) {
-      document.getElementById('start-menu').classList.add('hidden');
-    }
-
-    function openApp(appId) {
-      AudioEngine.playClickSound();
-      const win = document.getElementById(`win-${appId}`);
-      if (!win) return;
-      if (win.classList.contains('hidden')) win.classList.remove('hidden');
-      focusWindow(appId);
-      updateTaskbar();
-    }
-
-    function closeWindow(appId) {
-      AudioEngine.playClickSound();
-      const win = document.getElementById(`win-${appId}`);
-      if (win) win.classList.add('hidden');
-      updateTaskbar();
-    }
-
-    function minimizeWindow(appId) {
-      AudioEngine.playClickSound();
-      const win = document.getElementById(`win-${appId}`);
-      if (win) win.classList.add('hidden');
-      updateTaskbar();
-    }
-
-    function maximizeWindow(appId) {
-      AudioEngine.playClickSound();
-      const win = document.getElementById(`win-${appId}`);
-      if (!win) return;
-
-      if (win.dataset.maximized === "true") {
-        win.style.width = win.dataset.prevWidth || "680px";
-        win.style.height = win.dataset.prevHeight || "420px";
-        win.style.top = win.dataset.prevTop || "70px";
-        win.style.left = win.dataset.prevLeft || "80px";
-        win.dataset.maximized = "false";
-      } else {
-        win.dataset.prevWidth = win.style.width;
-        win.dataset.prevHeight = win.style.height;
-        win.dataset.prevTop = win.style.top;
-        win.dataset.prevLeft = win.style.left;
-
-        win.style.top = "32px";
-        win.style.left = "0px";
-        win.style.width = "100vw";
-        win.style.height = "calc(100vh - 80px)";
-        win.dataset.maximized = "true";
-      }
-    }
-
-    function focusWindow(appId) {
-      const win = document.getElementById(`win-${appId}`);
-      if (!win) return;
-      activeWindowZ += 1;
-      win.style.zIndex = activeWindowZ;
-    }
-
-    function updateTaskbar() {
-      const taskbarApps = document.getElementById('taskbar-apps');
-      if (!taskbarApps) return;
-      taskbarApps.innerHTML = '';
-
-      const apps = [
-        { id: 'terminal', name: 'ターミナル', icon: 'square-terminal', color: 'text-emerald-400' },
-        { id: 'filemanager', name: 'ファイル', icon: 'folder', color: 'text-amber-400' },
-        { id: 'texteditor', name: 'エディタ', icon: 'file-text', color: 'text-blue-400' },
-        { id: 'browser', name: 'ブラウザ', icon: 'globe', color: 'text-cyan-400' },
-        { id: 'calculator', name: '電卓', icon: 'calculator', color: 'text-teal-400' },
-        { id: 'settings', name: '設定', icon: 'settings', color: 'text-slate-300' }
-      ];
-
-      apps.forEach(app => {
-        const win = document.getElementById(`win-${app.id}`);
-        const isOpen = win && !win.classList.contains('hidden');
-
-        if (isOpen) {
-          const btn = document.createElement('button');
-          btn.className = `flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition bg-slate-800/80 text-white border-slate-700 shadow flex-shrink-0`;
-          btn.onclick = () => focusWindow(app.id);
-          btn.innerHTML = `<i data-lucide="${app.icon}" class="w-4 h-4 ${app.color}"></i> <span class="hidden md:inline">${app.name}</span>`;
-          taskbarApps.appendChild(btn);
-        }
-      });
-
-      lucide.createIcons();
-    }
-
-    function setupWindowDrag() {
-      const headers = document.querySelectorAll('.window-header');
-      headers.forEach(header => {
-        header.addEventListener('mousedown', (e) => {
-          if (e.target.tagName === 'BUTTON') return;
-          const win = header.closest('.window');
-          let shiftX = e.clientX - win.getBoundingClientRect().left;
-          let shiftY = e.clientY - win.getBoundingClientRect().top;
-
-          function moveAt(pageX, pageY) {
-            win.style.left = pageX - shiftX + 'px';
-            win.style.top = pageY - shiftY + 'px';
-          }
-
-          function onMouseMove(event) {
-            moveAt(event.pageX, event.pageY);
-          }
-
-          document.addEventListener('mousemove', onMouseMove);
-          document.onmouseup = function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.onmouseup = null;
-          };
-        });
-      });
-    }
-
-    function initResize(e, appId) {
-      e.preventDefault();
-      e.stopPropagation();
-      const win = document.getElementById(`win-${appId}`);
-      const startWidth = parseInt(document.defaultView.getComputedStyle(win).width, 10);
-      const startHeight = parseInt(document.defaultView.getComputedStyle(win).height, 10);
-      const startX = e.clientX;
-      const startY = e.clientY;
-
-      function doDrag(e) {
-        win.style.width = (startWidth + e.clientX - startX) + 'px';
-        win.style.height = (startHeight + e.clientY - startY) + 'px';
-      }
-
-      function stopDrag() {
-        document.documentElement.removeEventListener('mousemove', doDrag, false);
-        document.documentElement.removeEventListener('mouseup', stopDrag, false);
-      }
-
-      document.documentElement.addEventListener('mousemove', doDrag, false);
-      document.documentElement.addEventListener('mouseup', stopDrag, false);
-    }
-
-    // =========================================================================
-    // TEXT & CODE EDITOR LOGIC
-    // =========================================================================
-    function saveCurrentTextFile() {
-      const filename = document.getElementById('editor-filename').value.trim();
-      const content = document.getElementById('editor-textarea').value;
-
-      if (!filename) {
-        showToast("ファイル名を入力してください", "error");
-        return;
-      }
-
-      if (setFileContent(filename, content)) {
-        showToast(`ファイル '${filename}' を保存しました`, "success");
-        document.getElementById('editor-title').innerText = `テキスト / コード エディタ - ${filename}`;
-        document.getElementById('editor-status').innerText = `保存完了: ${new Date().toLocaleTimeString()}`;
-      } else {
-        showToast("ファイルの保存に失敗しました", "error");
-      }
-    }
-
-    function runCodeInEditor() {
-      AudioEngine.playClickSound();
-      const filename = document.getElementById('editor-filename').value.trim();
-      const code = document.getElementById('editor-textarea').value;
-      const previewContainer = document.getElementById('editor-preview-container');
-      const iframe = document.getElementById('editor-iframe');
-      const consoleOut = document.getElementById('editor-console-output');
-
-      // Check if it's plain text (.txt, etc.)
-      if (filename.endsWith('.txt')) {
-        showToast("プレビューは HTML または JavaScript コード対象です", "info");
-        return;
-      }
-
-      previewContainer.classList.remove('hidden');
-      consoleOut.innerHTML = `<span class="text-slate-400">--- 実行ログ ---</span><br>`;
-
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-        <head><style>body { font-family: sans-serif; padding: 10px; margin: 0; color: #1e293b; }</style></head>
-        <body>
-          <script>
-            console.log = function(...args) {
-              window.parent.postMessage({ type: 'CONSOLE_LOG', data: args.join(' ') }, '*');
-            };
-            window.onerror = function(msg) {
-              window.parent.postMessage({ type: 'CONSOLE_LOG', data: 'Error: ' + msg }, '*');
-            };
-          <\/script>
-          ${code.includes('<html') ? code : `<script>${code}<\/script>`}
-        </body>
-        </html>
-      `);
-      doc.close();
-      showToast("コードを実行しました", "success");
-    }
-
-    function clearEditorConsole() {
-      const consoleOut = document.getElementById('editor-console-output');
-      if (consoleOut) {
-        consoleOut.innerHTML = `<span class="text-slate-400">--- コンソール消去完了 ---</span><br>`;
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'CONSOLE_LOG') {
-        const consoleOut = document.getElementById('editor-console-output');
-        if (consoleOut) {
-          consoleOut.innerHTML += `<div>&gt; ${escapeHtml(event.data.data)}</div>`;
-          consoleOut.scrollTop = consoleOut.scrollHeight;
-        }
-      }
-    });
-
-    function toggleEditorPreview() {
-      document.getElementById('editor-preview-container').classList.add('hidden');
-    }
-
-    // =========================================================================
-    // CALCULATOR APP LOGIC
-    // =========================================================================
-    let calcExpr = "";
-    function calcPress(val) {
-      AudioEngine.playClickSound();
-      const display = document.getElementById('calc-display');
-      const history = document.getElementById('calc-history');
-
-      if (val === 'C') {
-        calcExpr = "";
-        display.innerText = "0";
-        history.innerText = "";
-      } else if (val === '=') {
-        try {
-          const res = eval(calcExpr);
-          history.innerText = calcExpr + " =";
-          display.innerText = res;
-          calcExpr = res.toString();
-        } catch(e) {
-          display.innerText = "Error";
-          calcExpr = "";
-        }
-      } else {
-        calcExpr += val;
-        display.innerText = calcExpr;
-      }
-    }
-
-    // =========================================================================
-    // BROWSER APP LOGIC
-    // =========================================================================
-    function navigateBrowser() {
-      let url = document.getElementById('browser-url').value.trim();
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-      document.getElementById('browser-iframe').src = url;
-      showToast(`Web ページへ移動: ${url}`, 'info');
-    }
-
-    function setBrowserUrl(url) {
-      document.getElementById('browser-url').value = url;
-      navigateBrowser();
-    }
-
-    function handleBrowserKey(e) {
-      if (e.key === 'Enter') navigateBrowser();
-    }
-
-    function reloadBrowser() {
-      document.getElementById('browser-iframe').contentWindow.location.reload();
-    }
-
-    // =========================================================================
-    // SETTINGS & WALLPAPER SWITCHER
-    // =========================================================================
-    function setWallpaper(themeClass) {
-      AudioEngine.playClickSound();
-      const desktop = document.getElementById('desktop');
-      const login = document.getElementById('login-screen');
-
-      desktop.className = desktop.className.replace(/\bwp-\S+/g, '') + ' ' + themeClass;
-      desktop.style.backgroundImage = '';
-
-      login.className = login.className.replace(/\bwp-\S+/g, '') + ' ' + themeClass;
-      login.style.backgroundImage = '';
-
-      showToast(`壁紙を変更しました: ${themeClass}`, 'success');
-    }
-
-    function setCustomWallpaper() {
-      const url = document.getElementById('custom-wallpaper-url').value.trim();
-      if (!url) return;
-
-      const desktop = document.getElementById('desktop');
-      desktop.style.backgroundImage = `url('${url}')`;
-      showToast("カスタム壁紙を設定しました", 'success');
-    }
-
-    // =========================================================================
-    // VFS & TERMINAL LOGIC
-    // =========================================================================
-    function normalizePath(path) {
-      const parts = path.split('/').filter(Boolean);
-      const stack = [];
-      for (const part of parts) {
-        if (part === '.') continue;
-        if (part === '..') {
-          if (stack.length > 0) stack.pop();
-        } else {
-          stack.push(part);
-        }
-      }
-      return '/' + stack.join('/');
-    }
-
-    function getDirectoryNode(pathStr) {
-      const norm = normalizePath(pathStr);
-      if (norm === '/' || norm === '') return VFS;
-      const parts = norm.split('/').filter(Boolean);
-      let curr = VFS;
-
-      for (const part of parts) {
-        if (!curr || curr.type !== 'dir' || !curr.content || !curr.content[part]) {
-          return null;
-        }
-        curr = curr.content[part];
-      }
-      return curr;
-    }
-
-    function navigateDir(target) {
-      let targetPath = target.startsWith('/') ? target : currentPath + '/' + target;
-      const resolved = normalizePath(targetPath);
-      const node = getDirectoryNode(resolved);
-
-      if (node && node.type === 'dir') {
-        currentPath = resolved;
-        const pathDisplay = document.getElementById('file-current-path');
-        if (pathDisplay) pathDisplay.innerText = currentPath;
-        updateTerminalPrompt();
-        renderFileManager();
-        return true;
-      }
-      return false;
-    }
-
-    function updateTerminalPrompt() {
-      const termPrompt = document.getElementById('terminal-prompt');
-      const termTitle = document.getElementById('terminal-win-title');
-      const userStr = activeLoggedInUser || 'guest';
-      const homePath = `/home/${userStr}`;
-      
-      const displayPath = currentPath === homePath ? '~' : currentPath;
-      if (termPrompt) termPrompt.innerText = `${userStr}@penguin-pc:${displayPath}$`;
-      if (termTitle) termTitle.innerText = `terminal@penguin-pc: ${displayPath}`;
-    }
-
-    function getFileContent(filename) {
-      const dir = getDirectoryNode(currentPath);
-      if (dir && dir.content && dir.content[filename] && dir.content[filename].type === "file") {
-        return dir.content[filename].content;
-      }
-      return null;
-    }
-
-    function setFileContent(filename, content) {
-      const dir = getDirectoryNode(currentPath);
-      if (dir && dir.type === 'dir') {
-        if (!dir.content) dir.content = {};
-        dir.content[filename] = {
-          type: "file",
-          content: content,
-          updatedAt: new Date().toLocaleString()
-        };
-        saveVFSToCloud();
-        renderFileManager();
-        return true;
-      }
-      return false;
-    }
-
-    function createNewFolder(folderName) {
-      const dir = getDirectoryNode(currentPath);
-      if (dir && dir.type === 'dir') {
-        if (!dir.content) dir.content = {};
-        dir.content[folderName] = {
-          type: "dir",
-          content: {}
-        };
-        saveVFSToCloud();
-        renderFileManager();
-        return true;
-      }
-      return false;
-    }
-
-    function renameVFSItem(oldName) {
-      showInputModal("リネーム", `'${oldName}' の新しい名前を入力してください:`, (newName) => {
-        if (!newName || newName === oldName) return;
-        const dir = getDirectoryNode(currentPath);
-        if (dir && dir.content && dir.content[oldName]) {
-          dir.content[newName] = dir.content[oldName];
-          delete dir.content[oldName];
-          saveVFSToCloud();
-          renderFileManager();
-          showToast(`'${oldName}' を '${newName}' に変更しました`, 'success');
-        }
-      });
-    }
-
-    function deleteVFSItem(itemName) {
-      AudioEngine.playClickSound();
-      const dir = getDirectoryNode(currentPath);
-      if (dir && dir.content && dir.content[itemName]) {
-        delete dir.content[itemName];
-        saveVFSToCloud();
-        renderFileManager();
-        showToast(`'${itemName}' を削除しました`, 'error');
-        return true;
-      }
-      return false;
-    }
-
-    function initTerminal() {
-      const input = document.getElementById('terminal-input');
-      const output = document.getElementById('terminal-output');
-      if (!input || !output) return;
-
-      output.innerHTML = `<span class="text-emerald-400 font-bold">PenguinOS Advanced Linux Shell v4.5 Loaded!</span>
+ <!-- LOGIN / DISPLAY MANAGER OVERLAY -->
+ <div id="login-screen" class="fixed inset-0 z-50 wp-emerald flex flex-col justify-between items-center p-6 select-none transition-all duration-500">
+ <div class="w-full flex justify-between items-center text-xs text-slate-400 font-mono">
+ <div class="flex items-center gap-2">
+ <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+ <span class="font-bold text-slate-200">PenguinOS Display Manager v4.5</span>
+ </div>
+ <div id="login-clock" class="text-sm text-slate-300 font-bold">00:00:00</div>
+ </div>
+
+ <div class="w-full max-w-md glass-panel p-8 rounded-2xl shadow-2xl border border-slate-700/60 flex flex-col items-center space-y-6">
+ <div class="relative">
+ <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg border-2 border-white/20">
+ <i data-lucide="user" class="w-10 h-10 text-white"></i>
+ </div>
+ <span id="login-status-dot" class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-slate-900 animate-pulse"></span>
+ </div>
+
+ <div class="text-center">
+ <h1 class="text-xl font-bold text-white tracking-wide" id="selected-user-display">ユーザーを選択してください</h1>
+ <p class="text-xs text-slate-400 mt-1" id="login-subtext">Supabase DB 連動中</p>
+ </div>
+
+ <div id="login-user-list-container" class="w-full space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+
+ <form id="login-form" onsubmit="handleLoginSubmit(event)" class="w-full space-y-4">
+ <div class="relative">
+ <input type="password" id="login-password" placeholder="パスワードを入力..." 
+class="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+ <button type="submit" class="absolute right-2 top-2 p-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition">
+ <i data-lucide="arrow-right" class="w-4 h-4"></i>
+ </button>
+ </div>
+ <div id="login-error-msg" class="text-xs text-rose-400 text-center hidden"></div>
+ </form>
+ </div>
+
+ <div class="w-full max-w-4xl flex items-center justify-between text-xs text-slate-400">
+ <div class="flex items-center gap-3">
+ <button onclick="toggleLoginTerminal()" class="flex items-center gap-2 bg-slate-800/90 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl border border-slate-700 shadow-lg transition active:scale-95">
+ <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
+ <span class="font-bold">プロビジョニングコマンド</span>
+ </button>
+ </div>
+
+ <div class="text-[11px] font-mono text-slate-500">
+ PenguinOS Multi-User Cloud Kernel (Supabase REST Layer)
+ </div>
+ </div>
+
+ <!-- LOGIN TERMINAL MODAL -->
+ <div id="login-terminal-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+ <div class="w-full max-w-2xl bg-slate-950 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[420px]">
+ <div class="h-10 bg-slate-900 px-4 flex items-center justify-between border-b border-slate-800">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
+ <span>System User Provisioning Command Line</span>
+ </div>
+ <button onclick="toggleLoginTerminal()" class="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-white">
+ <i data-lucide="x" class="w-4 h-4"></i>
+ </button>
+ </div>
+
+ <div class="flex-1 p-4 font-mono text-xs text-slate-200 overflow-y-auto space-y-2" id="login-term-output">
+ <div class="text-emerald-400 font-bold">=== PenguinOS User Administration Prompt ===</div>
+ <div class="text-slate-400">
+ ユーザー作成コマンド:<br>
+ <span class="text-amber-300">net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add</span><br><br>
+ 管理者権限付与コマンド:<br>
+ <span class="text-amber-300">net localgroup administrators &lt;ユーザー名&gt; /add</span>
+ </div>
+ <div class="border-b border-slate-800 my-2"></div>
+ </div>
+
+ <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2">
+ <span class="text-emerald-400 font-mono font-bold text-xs">C:\SYSTEM&gt;</span>
+ <input type="text" id="login-term-input" class="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-xs focus:ring-0" 
+placeholder="例: net user John MyPass123 /add" autocomplete="off" spellcheck="false" onkeydown="handleLoginCommandKey(event)">
+ <button onclick="executeLoginCommand()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1 rounded font-medium">実行</button>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- MAIN DESKTOP ENVIRONMENT -->
+ <div id="desktop" class="absolute inset-0 bg-cover bg-center flex flex-col justify-between wp-emerald transition-all duration-700">
+ <!-- Top System Bar -->
+ <div class="h-8 w-full glass-bar flex items-center justify-between px-4 text-xs font-medium text-slate-300 z-40 select-none">
+ <div class="flex items-center gap-3 sm:gap-4">
+ <button id="start-menu-btn" onclick="toggleStartMenu()" class="flex items-center gap-1.5 hover:text-white px-2 py-1 rounded transition hover:bg-white/10">
+ <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+ <span class="font-bold text-slate-100">PenguinOS</span>
+ <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30 hidden sm:inline">v4.5</span>
+ </button>
+ <span class="text-slate-600">|</span>
+ <button onclick="openApp('terminal')" class="hover:text-white flex items-center gap-1">
+ <i data-lucide="square-terminal" class="w-3.5 h-3.5 text-slate-400"></i> <span class="hidden sm:inline">ターミナル</span>
+ </button>
+ <button onclick="openApp('filemanager')" class="hover:text-white flex items-center gap-1">
+ <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i> <span class="hidden sm:inline">ファイル</span>
+ </button>
+ <button onclick="openApp('texteditor')" class="hover:text-white flex items-center gap-1">
+ <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-400"></i> <span class="hidden sm:inline">エディタ</span>
+ </button>
+ <button onclick="openApp('timer')" class="hover:text-white flex items-center gap-1">
+ <i data-lucide="timer" class="w-3.5 h-3.5 text-rose-400"></i> <span class="hidden sm:inline">タイマー</span>
+ </button>
+ </div>
+
+ <div class="flex items-center gap-3 sm:gap-4">
+ <div id="cloud-status-badge" class="flex items-center gap-1.5 text-[11px] bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+ <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+ <span id="cloud-status-text" class="text-slate-300 font-mono hidden md:inline">Supabase 接続中...</span>
+ </div>
+ <span class="text-slate-600">|</span>
+ <div id="active-user-badge" class="flex items-center gap-1 text-emerald-400 font-semibold text-[11px]">
+ <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+ <span id="active-user-name">Guest</span>
+ </div>
+ <span class="text-slate-600">|</span>
+ <div id="top-clock" class="font-mono text-slate-200">12:00 PM</div>
+ </div>
+ </div>
+
+ <!-- Desktop Workspace Grid Icons -->
+ <div id="workspace" class="flex-1 p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-flow-col md:grid-rows-6 gap-6 justify-start items-start relative z-10 overflow-y-auto" onclick="deselectIcons(event)">
+ <!-- App 1: Terminal -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('terminal'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 shadow-lg flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="square-terminal" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ターミナル</span>
+ </div>
+
+ <!-- App 2: File Manager -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('filemanager'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-amber-950/40 border border-amber-600/30 shadow-lg flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="folder-open" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ファイル</span>
+ </div>
+
+ <!-- App 3: Text & Code Editor -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('texteditor'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-blue-950/40 border border-blue-600/30 shadow-lg flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="file-text" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">テキストエディタ</span>
+ </div>
+
+ <!-- App 4: Browser -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('browser'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-cyan-950/40 border border-cyan-600/30 shadow-lg flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="globe" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">ブラウザ</span>
+ </div>
+
+ <!-- App 5: Calculator -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('calculator'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-teal-950/40 border border-teal-600/30 shadow-lg flex items-center justify-center text-teal-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="calculator" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">電卓</span>
+ </div>
+
+ <!-- App 6: Timer -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('timer'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-rose-950/40 border border-rose-600/30 shadow-lg flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="timer" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">タイマー</span>
+ </div>
+
+ <!-- App 7: System Settings -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('settings'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-600 shadow-lg flex items-center justify-center text-slate-300 group-hover:scale-105 transition-transform">
+ <i data-lucide="settings" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">設定</span>
+ </div>
+
+ <!-- App 8: Storage Info Guide -->
+ <div class="desktop-icon group flex flex-col items-center justify-center w-24 p-2 rounded-xl hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
+ onclick="openApp('storageinfo'); event.stopPropagation();">
+ <div class="w-12 h-12 rounded-xl bg-purple-950/40 border border-purple-600/30 shadow-lg flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
+ <i data-lucide="database" class="w-7 h-7"></i>
+ </div>
+ <span class="text-xs text-white mt-2 text-center drop-shadow font-medium">DB ガイド</span>
+ </div>
+ </div>
+
+ <!-- Start Menu Overlay -->
+ <div id="start-menu" class="hidden absolute bottom-14 left-4 w-80 glass-panel rounded-2xl shadow-2xl z-50 p-4 border border-slate-700/50 flex flex-col gap-3 select-none">
+ <div class="flex items-center justify-between pb-3 border-b border-slate-700/60">
+ <div class="flex items-center gap-3">
+ <div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow" id="menu-avatar">
+ U
+ </div>
+ <div>
+ <div class="text-sm font-semibold text-white" id="menu-username">user@penguin-pc</div>
+ <div class="text-xs text-emerald-400 flex items-center gap-1" id="menu-cloud-info">
+ <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <span id="menu-group-tag">Standard User</span>
+ </div>
+ </div>
+ </div>
+ <button onclick="logoutUser()" class="p-2 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl transition" title="ログアウト">
+ <i data-lucide="log-out" class="w-5 h-5"></i>
+ </button>
+ </div>
+
+ <div class="space-y-1">
+ <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">アプリケーション</div>
+ <button onclick="openApp('terminal'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i> ターミナル (Bash Shell)
+ </button>
+ <button onclick="openApp('filemanager'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i> ファイルマネージャー (VFS)
+ </button>
+ <button onclick="openApp('texteditor'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i> テキスト / コード エディタ
+ </button>
+ <button onclick="openApp('browser'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i> Web ブラウザ
+ </button>
+ <button onclick="openApp('calculator'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="calculator" class="w-4 h-4 text-teal-400"></i> 電卓
+ </button>
+ <button onclick="openApp('timer'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="timer" class="w-4 h-4 text-rose-400"></i> タイマーアプリ
+ </button>
+ <button onclick="openApp('settings'); toggleStartMenu();" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 text-slate-200 text-xs transition">
+ <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i> システム設定
+ </button>
+ </div>
+ </div>
+
+ <!-- Bottom Taskbar -->
+ <div class="h-12 w-full glass-bar flex items-center justify-between px-4 z-40 shadow-2xl select-none">
+ <div class="flex items-center gap-2">
+ <button id="launcher-icon" onclick="toggleStartMenu()" class="p-2 rounded-xl hover:bg-white/10 text-emerald-400 transition flex items-center justify-center">
+ <i data-lucide="grid" class="w-5 h-5"></i>
+ </button>
+ <div class="h-5 w-px bg-slate-700 mx-1"></div>
+ <div id="taskbar-apps" class="flex items-center gap-1.5 overflow-x-auto"></div>
+ </div>
+
+ <div class="text-xs text-slate-400 font-mono hidden sm:flex items-center gap-3">
+ <span>PenguinOS Linux Kernel 6.8.0</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- WINDOWS LAYER -->
+ <div id="windows-container" class="absolute inset-0 pointer-events-none z-20">
+
+ <!-- 1. TERMINAL WINDOW -->
+ <div id="win-terminal" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 680px; height: 420px; top: 70px; left: 80px;" onclick="focusWindow('terminal')">
+ <div class="window-header h-9 bg-slate-950/80 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="square-terminal" class="w-4 h-4 text-emerald-400"></i>
+ <span id="terminal-win-title">terminal@penguin-pc: ~</span>
+ </div>
+ <div class="flex items-center gap-1.5">
+ <button onclick="minimizeWindow('terminal')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+ <button onclick="maximizeWindow('terminal')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+ <button onclick="closeWindow('terminal')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ </div>
+ <div class="flex-1 bg-slate-950/95 p-4 font-mono text-xs sm:text-sm text-slate-200 overflow-y-auto flex flex-col justify-between" id="terminal-body">
+ <div id="terminal-output" class="space-y-1.5 whitespace-pre-wrap"></div>
+ <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-900">
+ <span class="text-emerald-400 font-bold" id="terminal-prompt">user@penguin-pc:~$</span>
+ <input type="text" id="terminal-input" class="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-xs sm:text-sm focus:ring-0" autocomplete="off" spellcheck="false" placeholder="コマンドを入力 (例: help, timer 5m, ls, txt)">
+ </div>
+ </div>
+ <div class="resize-handle" onmousedown="initResize(event, 'terminal')"></div>
+ </div>
+
+ <!-- 2. FILE MANAGER WINDOW -->
+ <div id="win-filemanager" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 720px; height: 460px; top: 90px; left: 140px;" onclick="focusWindow('filemanager')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i>
+ <span>ファイルマネージャー - Supabase VFS</span>
+ </div>
+ <div class="flex items-center gap-1.5">
+ <button onclick="minimizeWindow('filemanager')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+ <button onclick="maximizeWindow('filemanager')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+ <button onclick="closeWindow('filemanager')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ </div>
+ <div class="h-10 bg-slate-900/50 px-3 flex items-center justify-between border-b border-slate-800 text-xs">
+ <div class="flex items-center gap-2">
+ <button onclick="navigateDir('..')" class="p-1 rounded hover:bg-white/10 text-slate-300" title="親フォルダへ">
+ <i data-lucide="arrow-left" class="w-4 h-4"></i>
+ </button>
+ <div id="file-current-path" class="bg-slate-950 px-2.5 py-1 rounded border border-slate-800 font-mono text-slate-300 min-w-[180px]">
+ /home/user
+ </div>
+ </div>
+ <div class="flex items-center gap-2">
+ <button onclick="promptCreateFile()" class="flex items-center gap-1 bg-emerald-600/80 hover:bg-emerald-500 text-white px-2.5 py-1 rounded font-medium transition">
+ <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> 新規ファイル
+ </button>
+ <button onclick="promptCreateFolder()" class="flex items-center gap-1 bg-amber-600/80 hover:bg-amber-500 text-white px-2.5 py-1 rounded font-medium transition">
+ <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i> 新規フォルダ
+ </button>
+ </div>
+ </div>
+ <div class="flex-1 p-4 bg-slate-950/60 overflow-y-auto">
+ <div id="file-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
+ </div>
+ <div class="resize-handle" onmousedown="initResize(event, 'filemanager')"></div>
+ </div>
+
+ <!-- 3. TEXT & CODE EDITOR WINDOW -->
+ <div id="win-texteditor" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 760px; height: 500px; top: 80px; left: 180px;" onclick="focusWindow('texteditor')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i>
+ <span id="editor-title">テキスト / コード エディタ - (新規テキスト)</span>
+ </div>
+ <div class="flex items-center gap-1.5">
+ <button onclick="minimizeWindow('texteditor')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+ <button onclick="maximizeWindow('texteditor')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+ <button onclick="closeWindow('texteditor')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ </div>
+ <div class="h-10 bg-slate-900/50 px-3 flex items-center justify-between border-b border-slate-800 text-xs">
+ <div class="flex items-center gap-2">
+ <span class="text-slate-400 font-mono text-[11px]">ファイル名:</span>
+ <input type="text" id="editor-filename" value="note.txt" class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-mono text-xs w-48 outline-none focus:border-blue-500">
+ </div>
+ <div class="flex items-center gap-2">
+ <button onclick="runCodeInEditor()" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium transition shadow">
+ <i data-lucide="play" class="w-3.5 h-3.5"></i> 実行/プレビュー
+ </button>
+ <button onclick="saveCurrentTextFile()" class="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded font-medium transition shadow">
+ <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i> 保存
+ </button>
+ </div>
+ </div>
+ <div class="flex-1 flex flex-col md:flex-row bg-slate-950/90 overflow-hidden">
+ <div class="flex-1 relative flex flex-col">
+ <textarea id="editor-textarea" class="w-full h-full bg-transparent text-slate-100 font-mono text-xs sm:text-sm p-3 outline-none resize-none" 
+placeholder="ここにテキスト（.txt）や JavaScript/HTML コードを入力してください..."></textarea>
+ </div>
+ <div id="editor-preview-container" class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-800 bg-slate-900 flex flex-col hidden">
+ <div class="h-7 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 border-b border-slate-800">
+ <span>実行プレビュー / コンソール</span>
+ <div class="flex items-center gap-2">
+ <button onclick="clearEditorConsole()" class="hover:text-amber-400" title="ログ消去"><i data-lucide="eraser" class="w-3.5 h-3.5"></i></button>
+ <button onclick="toggleEditorPreview()" class="hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+ </div>
+ </div>
+ <iframe id="editor-iframe" class="flex-1 w-full bg-white text-slate-900 border-none"></iframe>
+ <div id="editor-console-output" class="h-28 bg-slate-950 p-2 font-mono text-[11px] text-emerald-400 overflow-y-auto border-t border-slate-800"></div>
+ </div>
+ </div>
+ <div class="h-6 bg-slate-950 px-3 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-900 font-mono">
+ <span id="editor-status">Ready</span>
+ <span>UTF-8 | Plain Text & Code Dynamic Support</span>
+ </div>
+ <div class="resize-handle" onmousedown="initResize(event, 'texteditor')"></div>
+ </div>
+
+ <!-- 4. BROWSER WINDOW -->
+ <div id="win-browser" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 780px; height: 480px; top: 60px; left: 160px;" onclick="focusWindow('browser')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i>
+ <span>Penguin Navigator (Web Browser)</span>
+ </div>
+ <div class="flex items-center gap-1.5">
+ <button onclick="minimizeWindow('browser')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+ <button onclick="maximizeWindow('browser')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+ <button onclick="closeWindow('browser')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ </div>
+ <div class="h-10 bg-slate-900/70 px-3 flex items-center gap-2 border-b border-slate-800 text-xs">
+ <button onclick="reloadBrowser()" class="p-1 hover:bg-white/10 rounded text-slate-300" title="再読み込み"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i></button>
+ <div class="flex-1 flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1">
+ <i data-lucide="lock" class="w-3 h-3 text-emerald-400 mr-2"></i>
+ <input type="text" id="browser-url" value="https://wikipedia.org" class="w-full bg-transparent text-slate-200 outline-none font-mono text-xs" onkeydown="handleBrowserKey(event)">
+ </div>
+ <button onclick="navigateBrowser()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded font-medium transition">移動</button>
+ </div>
+ <div class="h-7 bg-slate-950/80 border-b border-slate-800/80 px-3 flex items-center gap-2 text-[11px]">
+ <span class="text-slate-500">ブックマーク:</span>
+ <button onclick="setBrowserUrl('https://wikipedia.org')" class="hover:text-cyan-300 text-slate-300">Wikipedia</button>
+ <span class="text-slate-700">|</span>
+ <button onclick="setBrowserUrl('https://bing.com')" class="hover:text-cyan-300 text-slate-300">Bing</button>
+ <span class="text-slate-700">|</span>
+ <button onclick="setBrowserUrl('https://duckduckgo.com')" class="hover:text-cyan-300 text-slate-300">DuckDuckGo</button>
+ </div>
+ <div class="flex-1 bg-white relative">
+ <iframe id="browser-iframe" src="https://wikipedia.org" class="w-full h-full border-none"></iframe>
+ </div>
+ <div class="resize-handle" onmousedown="initResize(event, 'browser')"></div>
+ </div>
+
+ <!-- 5. CALCULATOR WINDOW -->
+ <div id="win-calculator" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 280px; height: 380px; top: 120px; left: 300px;" onclick="focusWindow('calculator')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="calculator" class="w-4 h-4 text-teal-400"></i>
+ <span>電卓</span>
+ </div>
+ <button onclick="closeWindow('calculator')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ <div class="p-3 bg-slate-950 flex-1 flex flex-col justify-between">
+ <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-right">
+ <div id="calc-history" class="text-[10px] text-slate-500 font-mono h-4"></div>
+ <div id="calc-display" class="text-2xl font-mono text-emerald-400 font-bold overflow-hidden text-ellipsis">0</div>
+ </div>
+
+ <div class="grid grid-cols-4 gap-2 mt-3 font-mono text-xs">
+ <button onclick="calcPress('C')" class="p-2.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg font-bold">C</button>
+ <button onclick="calcPress('(')" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">(</button>
+ <button onclick="calcPress(')')" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">)</button>
+ <button onclick="calcPress('/')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">/</button>
+
+ <button onclick="calcPress('7')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">7</button>
+ <button onclick="calcPress('8')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">8</button>
+ <button onclick="calcPress('9')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">9</button>
+ <button onclick="calcPress('*')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">*</button>
+
+ <button onclick="calcPress('4')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">4</button>
+ <button onclick="calcPress('5')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">5</button>
+ <button onclick="calcPress('6')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">6</button>
+ <button onclick="calcPress('-')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">-</button>
+
+ <button onclick="calcPress('1')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">1</button>
+ <button onclick="calcPress('2')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">2</button>
+ <button onclick="calcPress('3')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">3</button>
+ <button onclick="calcPress('+')" class="p-2.5 bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">+</button>
+
+ <button onclick="calcPress('0')" class="col-span-2 p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg font-bold">0</button>
+ <button onclick="calcPress('.')" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-lg">.</button>
+ <button onclick="calcPress('=')" class="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold">=</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- 6. TIMER WINDOW -->
+ <div id="win-timer" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 360px; height: 380px; top: 100px; left: 220px;" onclick="focusWindow('timer')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="timer" class="w-4 h-4 text-rose-400"></i>
+ <span>タイマー / ポモドーロ</span>
+ </div>
+ <button onclick="closeWindow('timer')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ <div class="p-4 bg-slate-950 flex-1 flex flex-col justify-between items-center text-center">
+ <!-- Display -->
+ <div class="w-full bg-slate-900/80 p-4 rounded-2xl border border-slate-800 flex flex-col items-center justify-center space-y-2">
+ <div id="timer-display" class="text-4xl font-mono text-rose-400 font-bold tracking-wider">00:00</div>
+ <div id="timer-status-text" class="text-xs text-slate-400 font-mono">停止中</div>
+ <!-- Progress Bar -->
+ <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+ <div id="timer-progress" class="bg-rose-500 h-full w-0 transition-all duration-300"></div>
+ </div>
+ </div>
+
+ <!-- Quick Presets -->
+ <div class="grid grid-cols-4 gap-2 w-full text-xs font-medium my-2">
+ <button onclick="setTimerPreset(1)" class="p-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800">1分</button>
+ <button onclick="setTimerPreset(3)" class="p-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800">3分</button>
+ <button onclick="setTimerPreset(5)" class="p-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800">5分</button>
+ <button onclick="setTimerPreset(25)" class="p-2 bg-rose-950/50 hover:bg-rose-900 text-rose-300 rounded-lg border border-rose-800/50 font-bold">25分</button>
+ </div>
+
+ <!-- Controls -->
+ <div class="flex items-center gap-3 w-full">
+ <button id="timer-toggle-btn" onclick="toggleTimer()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+ <i data-lucide="play" class="w-4 h-4"></i> スタート
+ </button>
+ <button onclick="resetTimerUI()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-xs transition">
+ リセット
+ </button>
+ </div>
+ </div>
+ </div>
+
+ <!-- 7. SETTINGS WINDOW -->
+ <div id="win-settings" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 600px; height: 460px; top: 110px; left: 240px;" onclick="focusWindow('settings')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i>
+ <span>システム設定</span>
+ </div>
+ <button onclick="closeWindow('settings')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ <div class="flex-1 bg-slate-950 p-5 overflow-y-auto space-y-5 text-xs text-slate-300">
+ <div>
+ <h4 class="font-bold text-white mb-2 flex items-center gap-2">
+ <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i> 壁紙テーマの選択
+ </h4>
+ <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+ <button onclick="setWallpaper('wp-emerald')" class="h-14 rounded-xl wp-emerald border-2 border-emerald-500 flex items-center justify-center font-semibold text-white text-[11px] shadow">
+ Emerald
+ </button>
+ <button onclick="setWallpaper('wp-cyberpunk')" class="h-14 rounded-xl wp-cyberpunk border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+ Cyberpunk
+ </button>
+ <button onclick="setWallpaper('wp-midnight')" class="h-14 rounded-xl wp-midnight border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+ Midnight
+ </button>
+ <button onclick="setWallpaper('wp-sunset')" class="h-14 rounded-xl wp-sunset border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+ Monochrome
+ </button>
+ <button onclick="setWallpaper('wp-neon')" class="h-14 rounded-xl wp-neon border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+ Neon
+ </button>
+ <button onclick="setWallpaper('wp-aurora')" class="h-14 rounded-xl wp-aurora border border-slate-700 hover:border-white flex items-center justify-center font-semibold text-white text-[11px] shadow">
+ Aurora
+ </button>
+ </div>
+
+ <div class="mt-3 flex items-center gap-2">
+ <input type="text" id="custom-wallpaper-url" placeholder="カスタム壁紙画像URL (https://...)" 
+class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 outline-none focus:border-emerald-500 font-mono text-xs">
+ <button onclick="setCustomWallpaper()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium transition">適用</button>
+ </div>
+ </div>
+
+ <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
+ <h4 class="font-bold text-white flex items-center gap-2">
+ <i data-lucide="user-check" class="w-4 h-4 text-amber-400"></i> アカウント情報
+ </h4>
+ <div class="grid grid-cols-2 gap-2 text-slate-400">
+ <div>ユーザー名: <span id="settings-username" class="text-white font-mono">Guest</span></div>
+ <div>グループ: <span id="settings-group" class="text-emerald-400 font-mono">Standard</span></div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- 8. STORAGE & SYSTEM INFO WINDOW -->
+ <div id="win-storageinfo" class="window absolute hidden pointer-events-auto glass-panel rounded-xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+ style="width: 620px; height: 440px; top: 140px; left: 180px;" onclick="focusWindow('storageinfo')">
+ <div class="window-header h-9 bg-slate-900/90 px-3 flex items-center justify-between cursor-move border-b border-slate-800 select-none">
+ <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+ <i data-lucide="database" class="w-4 h-4 text-purple-400"></i>
+ <span>マルチユーザー & Supabase ガイド</span>
+ </div>
+ <div class="flex items-center gap-1.5">
+ <button onclick="minimizeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400"></button>
+ <button onclick="maximizeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400"></button>
+ <button onclick="closeWindow('storageinfo')" class="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400"></button>
+ </div>
+ </div>
+ <div class="flex-1 p-5 bg-slate-950/90 text-slate-300 text-xs sm:text-sm overflow-y-auto space-y-4">
+ <div class="p-3.5 bg-emerald-950/30 border border-emerald-500/30 rounded-xl">
+ <h3 class="font-bold text-emerald-300 text-sm flex items-center gap-2">
+ <i data-lucide="check-circle-2" class="w-4 h-4"></i> Supabase データベース連携完了
+ </h3>
+ <p class="mt-1.5 text-slate-300 leading-relaxed text-xs">
+ 本システムは Supabase REST API と PostgREST リアルタイムリスナーに正常接続されています。ユーザーのアカウント作成情報や個別のファイルツリーは Supabase PostgreSQL データベースへ同期されます。
+ </p>
+ </div>
+
+ <div class="space-y-2.5">
+ <h4 class="font-semibold text-white text-xs uppercase tracking-wider text-slate-400">Supabase テーブル構造</h4>
+ <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
+ <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+ <i data-lucide="users" class="w-3.5 h-3.5"></i> public.system_accounts
+ </div>
+ <p class="text-xs text-slate-400 font-mono">
+ Columns: username (PK), password, group_name, created_at
+ </p>
+ </div>
+
+ <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
+ <div class="font-bold text-amber-400 flex items-center gap-1.5">
+ <i data-lucide="folder-lock" class="w-3.5 h-3.5"></i> public.user_vfs
+ </div>
+ <p class="text-xs text-slate-400 font-mono">
+ Columns: user_key (PK), vfs_tree (JSONB), updated_at
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ </div>
+
+ <!-- Toast Notification Container -->
+ <div id="toast-container" class="fixed bottom-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+ <!-- Custom Modal Dialog -->
+ <div id="custom-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+ <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
+ <h3 id="modal-title" class="text-sm font-bold text-white">通知</h3>
+ <div id="modal-body" class="text-xs text-slate-300 whitespace-pre-wrap"></div>
+ <div id="modal-input-container" class="hidden">
+ <input type="text" id="modal-input" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-xs text-white outline-none focus:border-emerald-500">
+ </div>
+ <div class="flex justify-end gap-2 pt-2">
+ <button id="modal-cancel-btn" onclick="closeModal()" class="px-3 py-1.5 rounded text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">キャンセル</button>
+ <button id="modal-ok-btn" class="px-3 py-1.5 rounded text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium">OK</button>
+ </div>
+ </div>
+ </div>
+
+ <script>
+ // AUDIO SYNTHESIZER
+ const AudioEngine = {
+ ctx: null,
+ init() {
+ if (!this.ctx) {
+ this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+ }
+ },
+ playTone(freq, type, duration) {
+ try {
+ this.init();
+ const osc = this.ctx.createOscillator();
+ const gain = this.ctx.createGain();
+ osc.type = type || 'sine';
+ osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+ gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+ osc.connect(gain);
+ gain.connect(this.ctx.destination);
+ osc.start();
+ osc.stop(this.ctx.currentTime + duration);
+ } catch(e) {}
+ },
+ playLoginSound() {
+ setTimeout(() => this.playTone(523.25, 'sine', 0.2), 0);
+ setTimeout(() => this.playTone(659.25, 'sine', 0.2), 150);
+ setTimeout(() => this.playTone(783.99, 'sine', 0.4), 300);
+ },
+ playClickSound() {
+ this.playTone(800, 'triangle', 0.05);
+ },
+ playErrorSound() {
+ this.playTone(180, 'sawtooth', 0.2);
+ },
+ playAlarmSound() {
+ for(let i = 0; i < 3; i++) {
+ setTimeout(() => this.playTone(880, 'sine', 0.15), i * 200);
+ }
+ }
+ };
+
+ function escapeHtml(text) {
+ if (typeof text !== 'string') return text;
+ return text.replace(/[&<>"']/g, function(m) {
+ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+ });
+ }
+
+ let modalCallback = null;
+ function showInputModal(title, message, callback) {
+ document.getElementById('modal-title').innerText = title;
+ document.getElementById('modal-body').innerText = message;
+ const inputContainer = document.getElementById('modal-input-container');
+ const input = document.getElementById('modal-input');
+ inputContainer.classList.remove('hidden');
+ input.value = '';
+ 
+ const modal = document.getElementById('custom-modal');
+ modal.classList.remove('hidden');
+ input.focus();
+
+ modalCallback = callback;
+ 
+ document.getElementById('modal-ok-btn').onclick = () => {
+ const val = input.value.trim();
+ closeModal();
+ if (modalCallback) modalCallback(val);
+ };
+ }
+
+ function closeModal() {
+ document.getElementById('custom-modal').classList.add('hidden');
+ document.getElementById('modal-input-container').classList.add('hidden');
+ }
+
+ function showToast(message, type = 'info') {
+ const container = document.getElementById('toast-container');
+ if (!container) return;
+
+ const toast = document.createElement('div');
+ const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info';
+ const borderColor = type === 'success' ? 'border-emerald-500' : type === 'error' ? 'border-rose-500' : 'border-blue-500';
+
+ toast.className = `toast-anim pointer-events-auto bg-slate-900/95 text-xs text-white px-3.5 py-2.5 rounded-xl border ${borderColor} shadow-xl flex items-center gap-2.5 min-w-[220px]`;
+ toast.innerHTML = `
+ <i data-lucide="${icon}" class="w-4 h-4 ${type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-rose-400' : 'text-blue-400'}"></i>
+ <span>${message}</span>
+ `;
+
+ container.appendChild(toast);
+ lucide.createIcons();
+
+ setTimeout(() => {
+ toast.style.opacity = '0';
+ toast.style.transition = 'opacity 0.3s ease';
+ setTimeout(() => toast.remove(), 300);
+ }, 3000);
+ }
+
+ const SUPABASE_URL = "https://qfzyrogwyjbzbblnvqzy.supabase.co";
+ const SUPABASE_KEY = "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw";
+
+ let supabaseClient = null;
+
+ const DEFAULT_VFS = {
+ "type": "dir",
+ "content": {
+ "home": {
+ "type": "dir",
+ "content": {
+ "user": {
+ "type": "dir",
+ "content": {
+ "welcome.txt": { type: "file", content: "PenguinOS Multi-User Supabase Cloud OS へようこそ！\n\n- 個別ストレージ(Supabase PostgreSQL JSONB)へ同期されています。\n- 他のユーザーとデータが混ざりません。\n- テキストエディタ、ブラウザ、電卓などの機能が利用可能です。", updatedAt: new Date().toLocaleString() },
+ "sample.js": { type: "file", content: "// JavaScript実行サンプル\nconsole.log('PenguinOS Shell Operational!');\nalert('Welcome to PenguinOS JavaScript Engine!');", updatedAt: new Date().toLocaleString() },
+ "Documents": { type: "dir", content: {} },
+ "Downloads": { type: "dir", content: {} }
+ }
+ }
+ }
+ }
+ }
+ };
+
+ let VFS = JSON.parse(JSON.stringify(DEFAULT_VFS));
+ let currentPath = "/home/user";
+ let activeWindowZ = 10;
+ 
+ let registeredUsers = {};
+ let activeLoggedInUser = null;
+ let selectedLoginUser = null;
+ let isRemoteUpdate = false;
+ let pollTimer = null;
+
+ let cmdHistory = [];
+ let cmdHistoryIndex = -1;
+
+ async function initSupabase() {
+ try {
+ if (typeof supabase !== 'undefined' && supabase.createClient) {
+ supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+ auth: { persistSession: false }
+ });
+ updateCloudStatusUI("Supabase 接続済み", "text-emerald-400", "bg-emerald-400");
+ await loadAccountsFromSupabase();
+ startPolling();
+ } else {
+ throw new Error("Supabase SDK not loaded.");
+ }
+ } catch (err) {
+ updateCloudStatusUI("オフライン (Local)", "text-amber-400", "bg-amber-400");
+ loadAccountsFromLocal();
+ }
+ }
+
+ async function loadAccountsFromSupabase() {
+ if (!supabaseClient) {
+ loadAccountsFromLocal();
+ return;
+ }
+ try {
+ const { data, error } = await supabaseClient
+ .from('system_accounts')
+ .select('*');
+
+ if (error) throw error;
+
+ if (data) {
+ registeredUsers = {};
+ data.forEach(row => {
+ registeredUsers[row.username] = {
+ password: row.password,
+ group: row.group_name || 'users',
+ createdAt: row.created_at
+ };
+ });
+ saveAccountsToLocal();
+ renderLoginUserList();
+ }
+ } catch (err) {
+ loadAccountsFromLocal();
+ }
+ }
+
+ function startPolling() {
+ if (pollTimer) return;
+ pollTimer = setInterval(() => {
+ loadAccountsFromSupabase();
+ if (activeLoggedInUser) {
+ fetchUserVFSFromSupabase(activeLoggedInUser.toLowerCase());
+ }
+ }, 3000);
+ }
+
+ async function fetchUserVFSFromSupabase(userKey) {
+ if (!supabaseClient) return;
+ try {
+ const { data, error } = await supabaseClient
+ .from('user_vfs')
+ .select('vfs_tree')
+ .eq('user_key', userKey)
+ .maybeSingle();
+
+ if (!error && data && data.vfs_tree && !isRemoteUpdate) {
+ if (JSON.stringify(VFS) !== JSON.stringify(data.vfs_tree)) {
+ VFS = data.vfs_tree;
+ renderFileManager();
+ updateTerminalPrompt();
+ }
+ }
+ } catch (e) {}
+ }
+
+ function loadAccountsFromLocal() {
+ try {
+ const local = localStorage.getItem('penguin_os_accounts_v1');
+ if (local) registeredUsers = JSON.parse(local);
+ } catch(e) {}
+ renderLoginUserList();
+ }
+
+ function saveAccountsToLocal() {
+ try {
+ localStorage.setItem('penguin_os_accounts_v1', JSON.stringify(registeredUsers));
+ } catch(e) {}
+ }
+
+ async function saveAccountToSupabase(username, password, groupName) {
+ saveAccountsToLocal();
+ if (!supabaseClient) return;
+ try {
+ await supabaseClient.from('system_accounts').upsert({
+ username: username,
+ password: password,
+ group_name: groupName,
+ created_at: new Date().toISOString()
+ });
+ } catch (e) {}
+ }
+
+ async function saveVFSToCloud() {
+ if (isRemoteUpdate) return;
+ if (activeLoggedInUser) {
+ try {
+ localStorage.setItem(`penguin_os_vfs_${activeLoggedInUser.toLowerCase()}`, JSON.stringify(VFS));
+ } catch(e) {}
+ }
+ if (!supabaseClient || !activeLoggedInUser) return;
+ try {
+ await supabaseClient.from('user_vfs').upsert({
+ user_key: activeLoggedInUser.toLowerCase(),
+ vfs_tree: VFS,
+ updated_at: new Date().toISOString()
+ });
+ } catch (e) {}
+ }
+
+ function updateCloudStatusUI(text, textColor, dotBg) {
+ const textEl = document.getElementById('cloud-status-text');
+ const dotEl = document.getElementById('cloud-status-dot');
+ if (textEl) {
+ textEl.innerText = text;
+ textEl.className = `font-mono ${textColor}`;
+ }
+ if (dotEl) {
+ dotEl.className = `w-2 h-2 rounded-full ${dotBg} animate-pulse`;
+ }
+ }
+
+ function renderLoginUserList() {
+ const container = document.getElementById('login-user-list-container');
+ const subtext = document.getElementById('login-subtext');
+ if (!container) return;
+
+ container.innerHTML = '';
+ const userKeys = Object.keys(registeredUsers);
+
+ if (userKeys.length === 0) {
+ subtext.innerText = "登録ユーザーがありません (プロビジョニングから作成可)";
+ document.getElementById('selected-user-display').innerText = "アカウントなし";
+ selectedLoginUser = null;
+ return;
+ }
+
+ subtext.innerText = "ログインするアカウントを選択してください";
+
+ userKeys.forEach(uname => {
+ const uObj = registeredUsers[uname];
+ const btn = document.createElement('button');
+ const isSelected = selectedLoginUser === uname;
+ btn.className = `w-full flex items-center justify-between p-2.5 rounded-xl border transition ${
+ isSelected ? 'bg-emerald-950/60 border-emerald-500/80 text-white shadow-md' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80'
+ }`;
+ 
+ btn.onclick = () => selectUserForLogin(uname);
+
+ const isAdmin = uObj.group === 'administrators';
+ btn.innerHTML = `
+ <div class="flex items-center gap-3">
+ <div class="w-7 h-7 rounded-full ${isAdmin ? 'bg-amber-600' : 'bg-slate-700'} flex items-center justify-center font-bold text-xs text-white">
+ ${uname.charAt(0).toUpperCase()}
+ </div>
+ <div class="text-left">
+ <div class="text-xs font-semibold">${uname}</div>
+ <div class="text-[10px] text-slate-400 font-mono">${isAdmin ? 'Administrators' : 'Users'}</div>
+ </div>
+ </div>
+ ${isSelected ? `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>` : ''}
+ `;
+ container.appendChild(btn);
+ });
+
+ if (!selectedLoginUser && userKeys.length > 0) {
+ selectUserForLogin(userKeys[0]);
+ }
+
+ lucide.createIcons();
+ }
+
+ function selectUserForLogin(uname) {
+ selectedLoginUser = uname;
+ document.getElementById('selected-user-display').innerText = uname;
+ document.getElementById('login-error-msg').classList.add('hidden');
+ renderLoginUserList();
+ }
+
+ function handleLoginSubmit(e) {
+ e.preventDefault();
+ const errEl = document.getElementById('login-error-msg');
+ errEl.classList.add('hidden');
+
+ if (!selectedLoginUser || !registeredUsers[selectedLoginUser]) {
+ errEl.innerText = "ユーザーを選択してください。";
+ errEl.classList.remove('hidden');
+ AudioEngine.playErrorSound();
+ return;
+ }
+
+ const pwdInput = document.getElementById('login-password').value;
+ const targetUser = registeredUsers[selectedLoginUser];
+
+ if (targetUser.password !== pwdInput) {
+ errEl.innerText = "パスワードが正しくありません。";
+ errEl.classList.remove('hidden');
+ AudioEngine.playErrorSound();
+ return;
+ }
+
+ AudioEngine.playLoginSound();
+ activeLoggedInUser = selectedLoginUser;
+ document.getElementById('login-password').value = '';
+ 
+ document.getElementById('active-user-name').innerText = activeLoggedInUser;
+ document.getElementById('menu-username').innerText = `${activeLoggedInUser}@penguin-pc`;
+ document.getElementById('menu-avatar').innerText = activeLoggedInUser.charAt(0).toUpperCase();
+ document.getElementById('menu-group-tag').innerText = targetUser.group === 'administrators' ? 'Administrator' : 'Standard User';
+ 
+ document.getElementById('settings-username').innerText = activeLoggedInUser;
+ document.getElementById('settings-group').innerText = targetUser.group;
+
+ currentPath = `/home/${activeLoggedInUser}`;
+
+ VFS = {
+ "type": "dir",
+ "content": {
+ "home": {
+ "type": "dir",
+ "content": {
+ [activeLoggedInUser]: {
+ "type": "dir",
+ "content": {
+ "welcome.txt": { 
+ type: "file", 
+ content: `${activeLoggedInUser} さん、PenguinOSへようこそ！\n\n新しく強化されたテキストエディタとターミナル機能をご活用ください。`, 
+ updatedAt: new Date().toLocaleString() 
+ },
+ "Documents": { type: "dir", content: {} },
+ "Downloads": { type: "dir", content: {} }
+ }
+ }
+ }
+ }
+ }
+ };
+
+ fetchUserVFSFromSupabase(activeLoggedInUser.toLowerCase());
+ renderFileManager();
+ updateTerminalPrompt();
+
+ document.getElementById('login-screen').classList.add('hidden');
+ showToast(`${activeLoggedInUser} としてログインしました`, 'success');
+ }
+
+ function logoutUser() {
+ AudioEngine.playClickSound();
+ activeLoggedInUser = null;
+ document.getElementById('login-screen').classList.remove('hidden');
+ document.getElementById('start-menu').classList.add('hidden');
+ renderLoginUserList();
+ showToast("ログアウトしました", 'info');
+ }
+
+ function toggleLoginTerminal() {
+ AudioEngine.playClickSound();
+ const modal = document.getElementById('login-terminal-modal');
+ modal.classList.toggle('hidden');
+ if (!modal.classList.contains('hidden')) {
+ document.getElementById('login-term-input').focus();
+ }
+ }
+
+ function handleLoginCommandKey(e) {
+ if (e.key === 'Enter') executeLoginCommand();
+ }
+
+ function executeLoginCommand() {
+ const input = document.getElementById('login-term-input');
+ const output = document.getElementById('login-term-output');
+ const cmdStr = input.value.trim();
+ if (!cmdStr) return;
+
+ output.innerHTML += `<div><span class="text-emerald-400">C:\\SYSTEM&gt;</span> ${escapeHtml(cmdStr)}</div>`;
+ input.value = '';
+
+ const parts = cmdStr.split(/\s+/);
+ let resMsg = '';
+
+ if (parts[0].toLowerCase() === 'net') {
+ if (parts[1] && parts[1].toLowerCase() === 'user') {
+ if (parts.length >= 5 && parts[parts.length - 1].toLowerCase() === '/add') {
+ const uname = parts[2];
+ const pass = parts[3];
+ registeredUsers[uname] = { password: pass, group: 'users', createdAt: new Date().toISOString() };
+ saveAccountToSupabase(uname, pass, 'users');
+ renderLoginUserList();
+ resMsg = `<span class="text-emerald-400">ユーザー '${uname}' を作成しました。</span>`;
+ } else {
+ resMsg = `<span class="text-rose-400">構文エラー: net user &lt;ユーザー名&gt; &lt;パスワード&gt; /add</span>`;
+ }
+ } else if (parts[1] && parts[1].toLowerCase() === 'localgroup') {
+ if (parts[2] && parts[2].toLowerCase() === 'administrators' && parts.length >= 5 && parts[parts.length - 1].toLowerCase() === '/add') {
+ const uname = parts[3];
+ if (registeredUsers[uname]) {
+ registeredUsers[uname].group = 'administrators';
+ saveAccountToSupabase(uname, registeredUsers[uname].password, 'administrators');
+ renderLoginUserList();
+ resMsg = `<span class="text-emerald-400">'${uname}' に管理者権限を付与しました。</span>`;
+ } else {
+ resMsg = `<span class="text-rose-400">エラー: ユーザー '${uname}' は存在しません。</span>`;
+ }
+ }
+ }
+ } else if (cmdStr.toLowerCase() === 'cls' || cmdStr.toLowerCase() === 'clear') {
+ output.innerHTML = '';
+ return;
+ } else {
+ resMsg = `<span class="text-rose-400">認識されないコマンドです。</span>`;
+ }
+
+ output.innerHTML += `<div class="mb-2">${resMsg}</div>`;
+ output.scrollTop = output.scrollHeight;
+ }
+
+ window.addEventListener('DOMContentLoaded', () => {
+ lucide.createIcons();
+ updateClock();
+ setInterval(updateClock, 1000);
+ setupWindowDrag();
+ 
+ initTerminal();
+ initSupabase();
+
+ window.addEventListener('keydown', (e) => {
+ if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 't') {
+ e.preventDefault();
+ openApp('terminal');
+ }
+ });
+ });
+
+ function updateClock() {
+ const now = new Date();
+ const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+ const topClock = document.getElementById('top-clock');
+ const loginClock = document.getElementById('login-clock');
+ if (topClock) topClock.innerText = timeStr;
+ if (loginClock) loginClock.innerText = timeStr;
+ }
+
+ function toggleStartMenu() {
+ AudioEngine.playClickSound();
+ const menu = document.getElementById('start-menu');
+ menu.classList.toggle('hidden');
+ }
+
+ function deselectIcons(e) {
+ document.getElementById('start-menu').classList.add('hidden');
+ }
+
+ function openApp(appId) {
+ AudioEngine.playClickSound();
+ const win = document.getElementById(`win-${appId}`);
+ if (!win) return;
+ if (win.classList.contains('hidden')) win.classList.remove('hidden');
+ focusWindow(appId);
+ updateTaskbar();
+ }
+
+ function closeWindow(appId) {
+ AudioEngine.playClickSound();
+ const win = document.getElementById(`win-${appId}`);
+ if (win) win.classList.add('hidden');
+ updateTaskbar();
+ }
+
+ function minimizeWindow(appId) {
+ AudioEngine.playClickSound();
+ const win = document.getElementById(`win-${appId}`);
+ if (win) win.classList.add('hidden');
+ updateTaskbar();
+ }
+
+ function maximizeWindow(appId) {
+ AudioEngine.playClickSound();
+ const win = document.getElementById(`win-${appId}`);
+ if (!win) return;
+
+ if (win.dataset.maximized === "true") {
+ win.style.width = win.dataset.prevWidth || "680px";
+ win.style.height = win.dataset.prevHeight || "420px";
+ win.style.top = win.dataset.prevTop || "70px";
+ win.style.left = win.dataset.prevLeft || "80px";
+ win.dataset.maximized = "false";
+ } else {
+ win.dataset.prevWidth = win.style.width;
+ win.dataset.prevHeight = win.style.height;
+ win.dataset.prevTop = win.style.top;
+ win.dataset.prevLeft = win.style.left;
+
+ win.style.top = "32px";
+ win.style.left = "0px";
+ win.style.width = "100vw";
+ win.style.height = "calc(100vh - 80px)";
+ win.dataset.maximized = "true";
+ }
+ }
+
+ function focusWindow(appId) {
+ const win = document.getElementById(`win-${appId}`);
+ if (!win) return;
+ activeWindowZ += 1;
+ win.style.zIndex = activeWindowZ;
+ }
+
+ function updateTaskbar() {
+ const taskbarApps = document.getElementById('taskbar-apps');
+ if (!taskbarApps) return;
+ taskbarApps.innerHTML = '';
+
+ const apps = [
+ { id: 'terminal', name: 'ターミナル', icon: 'square-terminal', color: 'text-emerald-400' },
+ { id: 'filemanager', name: 'ファイル', icon: 'folder', color: 'text-amber-400' },
+ { id: 'texteditor', name: 'エディタ', icon: 'file-text', color: 'text-blue-400' },
+ { id: 'browser', name: 'ブラウザ', icon: 'globe', color: 'text-cyan-400' },
+ { id: 'calculator', name: '電卓', icon: 'calculator', color: 'text-teal-400' },
+ { id: 'timer', name: 'タイマー', icon: 'timer', color: 'text-rose-400' },
+ { id: 'settings', name: '設定', icon: 'settings', color: 'text-slate-300' }
+ ];
+
+ apps.forEach(app => {
+ const win = document.getElementById(`win-${app.id}`);
+ const isOpen = win && !win.classList.contains('hidden');
+
+ if (isOpen) {
+ const btn = document.createElement('button');
+ btn.className = `flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition bg-slate-800/80 text-white border-slate-700 shadow flex-shrink-0`;
+ btn.onclick = () => focusWindow(app.id);
+ btn.innerHTML = `<i data-lucide="${app.icon}" class="w-4 h-4 ${app.color}"></i> <span class="hidden md:inline">${app.name}</span>`;
+ taskbarApps.appendChild(btn);
+ }
+ });
+
+ lucide.createIcons();
+ }
+
+ function setupWindowDrag() {
+ const headers = document.querySelectorAll('.window-header');
+ headers.forEach(header => {
+ header.addEventListener('mousedown', (e) => {
+ if (e.target.tagName === 'BUTTON') return;
+ const win = header.closest('.window');
+ let shiftX = e.clientX - win.getBoundingClientRect().left;
+ let shiftY = e.clientY - win.getBoundingClientRect().top;
+
+ function moveAt(pageX, pageY) {
+ win.style.left = pageX - shiftX + 'px';
+ win.style.top = pageY - shiftY + 'px';
+ }
+
+ function onMouseMove(event) {
+ moveAt(event.pageX, event.pageY);
+ }
+
+ document.addEventListener('mousemove', onMouseMove);
+ document.onmouseup = function() {
+ document.removeEventListener('mousemove', onMouseMove);
+ document.onmouseup = null;
+ };
+ });
+ });
+ }
+
+ function initResize(e, appId) {
+ e.preventDefault();
+ e.stopPropagation();
+ const win = document.getElementById(`win-${appId}`);
+ const startWidth = parseInt(document.defaultView.getComputedStyle(win).width, 10);
+ const startHeight = parseInt(document.defaultView.getComputedStyle(win).height, 10);
+ const startX = e.clientX;
+ const startY = e.clientY;
+
+ function doDrag(e) {
+ win.style.width = (startWidth + e.clientX - startX) + 'px';
+ win.style.height = (startHeight + e.clientY - startY) + 'px';
+ }
+
+ function stopDrag() {
+ document.documentElement.removeEventListener('mousemove', doDrag, false);
+ document.documentElement.removeEventListener('mouseup', stopDrag, false);
+ }
+
+ document.documentElement.addEventListener('mousemove', doDrag, false);
+ document.documentElement.addEventListener('mouseup', stopDrag, false);
+ }
+
+ // =========================================================================
+ // TIMER APP LOGIC
+ // =========================================================================
+ let timerInterval = null;
+ let timerTotalSeconds = 0;
+ let timerRemainingSeconds = 0;
+ let isTimerRunning = false;
+
+ function setTimerPreset(minutes) {
+ AudioEngine.playClickSound();
+ startTimer(minutes * 60);
+ }
+
+ function startTimer(totalSeconds) {
+ clearInterval(timerInterval);
+ timerTotalSeconds = totalSeconds;
+ timerRemainingSeconds = totalSeconds;
+ isTimerRunning = true;
+
+ updateTimerUI();
+ updateTimerToggleButton();
+
+ timerInterval = setInterval(() => {
+ timerRemainingSeconds--;
+ updateTimerUI();
+
+ if (timerRemainingSeconds <= 0) {
+ clearInterval(timerInterval);
+ isTimerRunning = false;
+ updateTimerToggleButton();
+ AudioEngine.playAlarmSound();
+ showToast("⏰ タイマーが終了しました！", "error");
+ }
+ }, 1000);
+ }
+
+ function toggleTimer() {
+ AudioEngine.playClickSound();
+ if (isTimerRunning) {
+ clearInterval(timerInterval);
+ isTimerRunning = false;
+ document.getElementById('timer-status-text').innerText = "一時停止中";
+ updateTimerToggleButton();
+ } else {
+ if (timerRemainingSeconds <= 0) {
+ startTimer(5 * 60); // Default 5 mins if zero
+ } else {
+ isTimerRunning = true;
+ updateTimerToggleButton();
+ timerInterval = setInterval(() => {
+ timerRemainingSeconds--;
+ updateTimerUI();
+
+ if (timerRemainingSeconds <= 0) {
+ clearInterval(timerInterval);
+ isTimerRunning = false;
+ updateTimerToggleButton();
+ AudioEngine.playAlarmSound();
+ showToast("⏰ タイマーが終了しました！", "error");
+ }
+ }, 1000);
+ }
+ }
+ }
+
+ function resetTimerUI() {
+ AudioEngine.playClickSound();
+ clearInterval(timerInterval);
+ isTimerRunning = false;
+ timerTotalSeconds = 0;
+ timerRemainingSeconds = 0;
+ updateTimerUI();
+ updateTimerToggleButton();
+ document.getElementById('timer-status-text').innerText = "停止中";
+ }
+
+ function updateTimerUI() {
+ const minutes = Math.floor(timerRemainingSeconds / 60);
+ const seconds = timerRemainingSeconds % 60;
+ const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+ 
+ const display = document.getElementById('timer-display');
+ const progressBar = document.getElementById('timer-progress');
+ const statusText = document.getElementById('timer-status-text');
+
+ if (display) display.innerText = formatted;
+ if (statusText && isTimerRunning) statusText.innerText = "カウントダウン中...";
+
+ if (progressBar && timerTotalSeconds > 0) {
+ const percent = ((timerTotalSeconds - timerRemainingSeconds) / timerTotalSeconds) * 100;
+ progressBar.style.width = `${percent}%`;
+ } else if (progressBar) {
+ progressBar.style.width = "0%";
+ }
+ }
+
+ function updateTimerToggleButton() {
+ const btn = document.getElementById('timer-toggle-btn');
+ if (!btn) return;
+
+ if (isTimerRunning) {
+ btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> 一時停止`;
+ btn.className = "flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5";
+ } else {
+ btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> スタート`;
+ btn.className = "flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5";
+ }
+ lucide.createIcons();
+ }
+
+ // TEXT & CODE EDITOR LOGIC
+ function saveCurrentTextFile() {
+ const filename = document.getElementById('editor-filename').value.trim();
+ const content = document.getElementById('editor-textarea').value;
+
+ if (!filename) {
+ showToast("ファイル名を入力してください", "error");
+ return;
+ }
+
+ if (setFileContent(filename, content)) {
+ showToast(`ファイル '${filename}' を保存しました`, "success");
+ document.getElementById('editor-title').innerText = `テキスト / コード エディタ - ${filename}`;
+ document.getElementById('editor-status').innerText = `保存完了: ${new Date().toLocaleTimeString()}`;
+ } else {
+ showToast("ファイルの保存に失敗しました", "error");
+ }
+ }
+
+ function runCodeInEditor() {
+ AudioEngine.playClickSound();
+ const filename = document.getElementById('editor-filename').value.trim();
+ const code = document.getElementById('editor-textarea').value;
+ const previewContainer = document.getElementById('editor-preview-container');
+ const iframe = document.getElementById('editor-iframe');
+ const consoleOut = document.getElementById('editor-console-output');
+
+ if (filename.endsWith('.txt')) {
+ showToast("プレビューは HTML または JavaScript コード対象です", "info");
+ return;
+ }
+
+ previewContainer.classList.remove('hidden');
+ consoleOut.innerHTML = `<span class="text-slate-400">--- 実行ログ ---</span><br>`;
+
+ const doc = iframe.contentWindow.document;
+ doc.open();
+ doc.write(`
+ <!DOCTYPE html>
+ <html>
+ <head><style>body { font-family: sans-serif; padding: 10px; margin: 0; color: #1e293b; }</style></head>
+ <body>
+ <script>
+ console.log = function(...args) {
+ window.parent.postMessage({ type: 'CONSOLE_LOG', data: args.join(' ') }, '*');
+ };
+ window.onerror = function(msg) {
+ window.parent.postMessage({ type: 'CONSOLE_LOG', data: 'Error: ' + msg }, '*');
+ };
+ <\/script>
+ ${code.includes('<html') ? code : `<script>${code}<\/script>`}
+ </body>
+ </html>
+ `);
+ doc.close();
+ showToast("コードを実行しました", "success");
+ }
+
+ function clearEditorConsole() {
+ const consoleOut = document.getElementById('editor-console-output');
+ if (consoleOut) {
+ consoleOut.innerHTML = `<span class="text-slate-400">--- コンソール消去完了 ---</span><br>`;
+ }
+ }
+
+ window.addEventListener('message', (event) => {
+ if (event.data && event.data.type === 'CONSOLE_LOG') {
+ const consoleOut = document.getElementById('editor-console-output');
+ if (consoleOut) {
+ consoleOut.innerHTML += `<div>&gt; ${escapeHtml(event.data.data)}</div>`;
+ consoleOut.scrollTop = consoleOut.scrollHeight;
+ }
+ }
+ });
+
+ function toggleEditorPreview() {
+ document.getElementById('editor-preview-container').classList.add('hidden');
+ }
+
+ // CALCULATOR APP LOGIC
+ let calcExpr = "";
+ function calcPress(val) {
+ AudioEngine.playClickSound();
+ const display = document.getElementById('calc-display');
+ const history = document.getElementById('calc-history');
+
+ if (val === 'C') {
+ calcExpr = "";
+ display.innerText = "0";
+ history.innerText = "";
+ } else if (val === '=') {
+ try {
+ const res = eval(calcExpr);
+ history.innerText = calcExpr + " =";
+ display.innerText = res;
+ calcExpr = res.toString();
+ } catch(e) {
+ display.innerText = "Error";
+ calcExpr = "";
+ }
+ } else {
+ calcExpr += val;
+ display.innerText = calcExpr;
+ }
+ }
+
+ // BROWSER APP LOGIC
+ function navigateBrowser() {
+ let url = document.getElementById('browser-url').value.trim();
+ if (!url.startsWith('http://') && !url.startsWith('https://')) {
+ url = 'https://' + url;
+ }
+ document.getElementById('browser-iframe').src = url;
+ showToast(`Web ページへ移動: ${url}`, 'info');
+ }
+
+ function setBrowserUrl(url) {
+ document.getElementById('browser-url').value = url;
+ navigateBrowser();
+ }
+
+ function handleBrowserKey(e) {
+ if (e.key === 'Enter') navigateBrowser();
+ }
+
+ function reloadBrowser() {
+ document.getElementById('browser-iframe').contentWindow.location.reload();
+ }
+
+ // SETTINGS & WALLPAPER SWITCHER
+ function setWallpaper(themeClass) {
+ AudioEngine.playClickSound();
+ const desktop = document.getElementById('desktop');
+ const login = document.getElementById('login-screen');
+
+ desktop.className = desktop.className.replace(/\bwp-\S+/g, '') + ' ' + themeClass;
+ desktop.style.backgroundImage = '';
+
+ login.className = login.className.replace(/\bwp-\S+/g, '') + ' ' + themeClass;
+ login.style.backgroundImage = '';
+
+ showToast(`壁紙を変更しました: ${themeClass}`, 'success');
+ }
+
+ function setCustomWallpaper() {
+ const url = document.getElementById('custom-wallpaper-url').value.trim();
+ if (!url) return;
+
+ const desktop = document.getElementById('desktop');
+ desktop.style.backgroundImage = `url('${url}')`;
+ showToast("カスタム壁紙を設定しました", 'success');
+ }
+
+ // VFS & TERMINAL LOGIC
+ function normalizePath(path) {
+ const parts = path.split('/').filter(Boolean);
+ const stack = [];
+ for (const part of parts) {
+ if (part === '.') continue;
+ if (part === '..') {
+ if (stack.length > 0) stack.pop();
+ } else {
+ stack.push(part);
+ }
+ }
+ return '/' + stack.join('/');
+ }
+
+ function getDirectoryNode(pathStr) {
+ const norm = normalizePath(pathStr);
+ if (norm === '/' || norm === '') return VFS;
+ const parts = norm.split('/').filter(Boolean);
+ let curr = VFS;
+
+ for (const part of parts) {
+ if (!curr || curr.type !== 'dir' || !curr.content || !curr.content[part]) {
+ return null;
+ }
+ curr = curr.content[part];
+ }
+ return curr;
+ }
+
+ function navigateDir(target) {
+ let targetPath = target.startsWith('/') ? target : currentPath + '/' + target;
+ const resolved = normalizePath(targetPath);
+ const node = getDirectoryNode(resolved);
+
+ if (node && node.type === 'dir') {
+ currentPath = resolved;
+ const pathDisplay = document.getElementById('file-current-path');
+ if (pathDisplay) pathDisplay.innerText = currentPath;
+ updateTerminalPrompt();
+ renderFileManager();
+ return true;
+ }
+ return false;
+ }
+
+ function updateTerminalPrompt() {
+ const termPrompt = document.getElementById('terminal-prompt');
+ const termTitle = document.getElementById('terminal-win-title');
+ const userStr = activeLoggedInUser || 'guest';
+ const homePath = `/home/${userStr}`;
+ 
+ const displayPath = currentPath === homePath ? '~' : currentPath;
+ if (termPrompt) termPrompt.innerText = `${userStr}@penguin-pc:${displayPath}$`;
+ if (termTitle) termTitle.innerText = `terminal@penguin-pc: ${displayPath}`;
+ }
+
+ function getFileContent(filename) {
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.content && dir.content[filename] && dir.content[filename].type === "file") {
+ return dir.content[filename].content;
+ }
+ return null;
+ }
+
+ function setFileContent(filename, content) {
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.type === 'dir') {
+ if (!dir.content) dir.content = {};
+ dir.content[filename] = {
+ type: "file",
+ content: content,
+ updatedAt: new Date().toLocaleString()
+ };
+ saveVFSToCloud();
+ renderFileManager();
+ return true;
+ }
+ return false;
+ }
+
+ function createNewFolder(folderName) {
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.type === 'dir') {
+ if (!dir.content) dir.content = {};
+ dir.content[folderName] = {
+ type: "dir",
+ content: {}
+ };
+ saveVFSToCloud();
+ renderFileManager();
+ return true;
+ }
+ return false;
+ }
+
+ function renameVFSItem(oldName) {
+ showInputModal("リネーム", `'${oldName}' の新しい名前を入力してください:`, (newName) => {
+ if (!newName || newName === oldName) return;
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.content && dir.content[oldName]) {
+ dir.content[newName] = dir.content[oldName];
+ delete dir.content[oldName];
+ saveVFSToCloud();
+ renderFileManager();
+ showToast(`'${oldName}' を '${newName}' に変更しました`, 'success');
+ }
+ });
+ }
+
+ function deleteVFSItem(itemName) {
+ AudioEngine.playClickSound();
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.content && dir.content[itemName]) {
+ delete dir.content[itemName];
+ saveVFSToCloud();
+ renderFileManager();
+ showToast(`'${itemName}' を削除しました`, 'error');
+ return true;
+ }
+ return false;
+ }
+
+ function initTerminal() {
+ const input = document.getElementById('terminal-input');
+ const output = document.getElementById('terminal-output');
+ if (!input || !output) return;
+
+ output.innerHTML = `<span class="text-emerald-400 font-bold">PenguinOS Advanced Linux Shell v4.5 Loaded!</span>
 <span class="text-amber-300 font-bold">'help'</span> と入力すると使用可能なコマンド一覧を表示します。
-新機能: <span class="text-cyan-300">txt</span>, <span class="text-cyan-300">find</span>, <span class="text-cyan-300">sysinfo</span>, <span class="text-cyan-300">open</span> コマンド追加
+新機能: <span class="text-rose-400 font-bold">timer</span>, <span class="text-cyan-300">txt</span>, <span class="text-cyan-300">find</span>, <span class="text-cyan-300">sysinfo</span>, <span class="text-cyan-300">open</span> コマンド追加
 `;
 
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          const cmdLine = input.value.trim();
-          if (cmdLine) {
-            cmdHistory.push(cmdLine);
-            cmdHistoryIndex = cmdHistory.length;
-            executeTerminalCommand(cmdLine);
-          }
-          input.value = '';
-        } else if (e.key === 'ArrowUp') {
-          if (cmdHistory.length > 0 && cmdHistoryIndex > 0) {
-            cmdHistoryIndex--;
-            input.value = cmdHistory[cmdHistoryIndex];
-          }
-        } else if (e.key === 'ArrowDown') {
-          if (cmdHistoryIndex < cmdHistory.length - 1) {
-            cmdHistoryIndex++;
-            input.value = cmdHistory[cmdHistoryIndex];
-          } else {
-            cmdHistoryIndex = cmdHistory.length;
-            input.value = '';
-          }
-        } else if (e.key === 'Tab') {
-          e.preventDefault();
-          handleTabCompletion(input);
-        }
-      });
-    }
+ input.addEventListener('keydown', (e) => {
+ if (e.key === 'Enter') {
+ const cmdLine = input.value.trim();
+ if (cmdLine) {
+ cmdHistory.push(cmdLine);
+ cmdHistoryIndex = cmdHistory.length;
+ executeTerminalCommand(cmdLine);
+ }
+ input.value = '';
+ } else if (e.key === 'ArrowUp') {
+ if (cmdHistory.length > 0 && cmdHistoryIndex > 0) {
+ cmdHistoryIndex--;
+ input.value = cmdHistory[cmdHistoryIndex];
+ }
+ } else if (e.key === 'ArrowDown') {
+ if (cmdHistoryIndex < cmdHistory.length - 1) {
+ cmdHistoryIndex++;
+ input.value = cmdHistory[cmdHistoryIndex];
+ } else {
+ cmdHistoryIndex = cmdHistory.length;
+ input.value = '';
+ }
+ } else if (e.key === 'Tab') {
+ e.preventDefault();
+ handleTabCompletion(input);
+ }
+ });
+ }
 
-    function handleTabCompletion(inputEl) {
-      const text = inputEl.value;
-      const parts = text.split(' ');
-      const lastPart = parts[parts.length - 1];
-      const dir = getDirectoryNode(currentPath);
+ function handleTabCompletion(inputEl) {
+ const text = inputEl.value;
+ const parts = text.split(' ');
+ const lastPart = parts[parts.length - 1];
+ const dir = getDirectoryNode(currentPath);
 
-      if (dir && dir.content && lastPart) {
-        const matches = Object.keys(dir.content).filter(k => k.startsWith(lastPart));
-        if (matches.length === 1) {
-          parts[parts.length - 1] = matches[0];
-          inputEl.value = parts.join(' ');
-        }
-      }
-    }
+ if (dir && dir.content && lastPart) {
+ const matches = Object.keys(dir.content).filter(k => k.startsWith(lastPart));
+ if (matches.length === 1) {
+ parts[parts.length - 1] = matches[0];
+ inputEl.value = parts.join(' ');
+ }
+ }
+ }
 
-    function executeTerminalCommand(cmdLine) {
-      const output = document.getElementById('terminal-output');
-      const promptText = document.getElementById('terminal-prompt').innerText;
-      output.innerHTML += `\n<div><span class="text-emerald-400">${promptText}</span> ${escapeHtml(cmdLine)}</div>`;
+ function executeTerminalCommand(cmdLine) {
+ const output = document.getElementById('terminal-output');
+ const promptText = document.getElementById('terminal-prompt').innerText;
+ output.innerHTML += `\n<div><span class="text-emerald-400">${promptText}</span> ${escapeHtml(cmdLine)}</div>`;
 
-      const parts = cmdLine.split(' ');
-      const mainCmd = parts[0].toLowerCase();
-      const args = parts.slice(1);
+ const parts = cmdLine.split(' ');
+ const mainCmd = parts[0].toLowerCase();
+ const args = parts.slice(1);
 
-      let response = '';
+ let response = '';
 
-      switch (mainCmd) {
-        case 'help':
-          response = `
+ switch (mainCmd) {
+ case 'help':
+ response = `
 <span class="text-amber-300 font-bold font-mono">使用可能コマンド:</span>
-  <span class="text-emerald-400 font-mono">ls / pwd / cd [dir]</span>     : ファイル/ディレクトリ操作
-  <span class="text-emerald-400 font-mono">cat / touch / rm / mkdir</span> : ファイル操作・作成・削除
-  <span class="text-emerald-400 font-mono">txt [file] [content]</span>    : テキストファイルの直接書き込み作成
-  <span class="text-emerald-400 font-mono">open [file]</span>             : エディタでファイルを開く
-  <span class="text-emerald-400 font-mono">find [keyword]</span>          : ファイル/フォルダを検索
-  <span class="text-emerald-400 font-mono">sysinfo</span>                 : システム環境情報の表示
-  <span class="text-emerald-400 font-mono">echo [text]</span>             : テキスト出力
-  <span class="text-emerald-400 font-mono">js [code]</span>                : JSコードの直接評価実行
-  <span class="text-emerald-400 font-mono">calc [expr]</span>              : 計算実行
-  <span class="text-emerald-400 font-mono">theme [name]</span>             : 壁紙変更
-  <span class="text-emerald-400 font-mono">date / history</span>           : 日時・履歴表示
-  <span class="text-emerald-400 font-mono">whoami / neofetch</span>        : アカウント情報
-  <span class="text-emerald-400 font-mono">clear</span>                    : ログ消去
+ <span class="text-rose-400 font-mono">timer [time/stop]</span> : タイマー起動 (例: timer 5m, timer 30s)
+ <span class="text-emerald-400 font-mono">ls / pwd / cd [dir]</span> : ファイル/ディレクトリ操作
+ <span class="text-emerald-400 font-mono">cat / touch / rm / mkdir</span> : ファイル操作・作成・削除
+ <span class="text-emerald-400 font-mono">txt [file] [content]</span> : テキストファイルの直接書き込み作成
+ <span class="text-emerald-400 font-mono">open [file]</span> : エディタでファイルを開く
+ <span class="text-emerald-400 font-mono">find [keyword]</span> : ファイル/フォルダを検索
+ <span class="text-emerald-400 font-mono">sysinfo</span> : システム環境情報の表示
+ <span class="text-emerald-400 font-mono">echo [text]</span> : テキスト出力
+ <span class="text-emerald-400 font-mono">js [code]</span> : JSコードの直接評価実行
+ <span class="text-emerald-400 font-mono">calc [expr]</span> : 計算実行
+ <span class="text-emerald-400 font-mono">theme [name]</span> : 壁紙変更
+ <span class="text-emerald-400 font-mono">date / history</span> : 日時・履歴表示
+ <span class="text-emerald-400 font-mono">whoami / neofetch</span> : アカウント情報
+ <span class="text-emerald-400 font-mono">clear</span> : ログ消去
 `;
-          break;
+ break;
 
-        case 'txt':
-          if (args[0]) {
-            const fname = args[0].endsWith('.txt') ? args[0] : args[0] + '.txt';
-            const textContent = args.slice(1).join(' ');
-            setFileContent(fname, textContent);
-            response = `<span class="text-emerald-400">テキストファイル '${fname}' を作成・保存しました。</span>`;
-          } else {
-            response = `<span class="text-amber-300">使用法: txt &lt;ファイル名&gt; [テキスト内容]</span>`;
-          }
-          break;
+ case 'timer':
+ if (args[0]) {
+ const param = args[0].toLowerCase();
+ if (param === 'stop') {
+ resetTimerUI();
+ response = `<span class="text-amber-300">タイマーを停止・リセットしました。</span>`;
+ } else {
+ let sec = 0;
+ if (param.endsWith('m')) sec = parseInt(param) * 60;
+ else if (param.endsWith('s')) sec = parseInt(param);
+ else sec = parseInt(param) * 60; // default minutes
 
-        case 'open':
-          if (args[0]) {
-            const content = getFileContent(args[0]);
-            if (content !== null) {
-              openInEditor(args[0]);
-              response = `<span class="text-emerald-400">'${args[0]}' をエディタで開きました。</span>`;
-            } else {
-              response = `<span class="text-rose-400">ファイルが見つかりません: ${args[0]}</span>`;
-            }
-          } else {
-            response = `<span class="text-amber-300">使用法: open &lt;ファイル名&gt;</span>`;
-          }
-          break;
+ if (!isNaN(sec) && sec > 0) {
+ openApp('timer');
+ startTimer(sec);
+ response = `<span class="text-rose-400">⏱️ タイマーを開始しました (${sec}秒)</span>`;
+ } else {
+ response = `<span class="text-rose-400">時間の指定方法が無効です (例: timer 5m, timer 30s)</span>`;
+ }
+ }
+ } else {
+ openApp('timer');
+ response = `<span class="text-emerald-400">タイマーアプリを起動しました。</span>`;
+ }
+ break;
 
-        case 'find':
-          if (args[0]) {
-            const query = args[0].toLowerCase();
-            const dir = getDirectoryNode(currentPath);
-            if (dir && dir.content) {
-              const matched = Object.keys(dir.content).filter(name => name.toLowerCase().includes(query));
-              response = matched.length > 0 
-                ? `<span class="text-emerald-400">検索結果 (${matched.length}件):</span>\n  ` + matched.join('\n  ')
-                : `<span class="text-slate-400">キーワード '${args[0]}' に該当する項目はありません。</span>`;
-            }
-          } else {
-            response = `<span class="text-amber-300">使用法: find &lt;検索キーワード&gt;</span>`;
-          }
-          break;
+ case 'txt':
+ if (args[0]) {
+ const fname = args[0].endsWith('.txt') ? args[0] : args[0] + '.txt';
+ const textContent = args.slice(1).join(' ');
+ setFileContent(fname, textContent);
+ response = `<span class="text-emerald-400">テキストファイル '${fname}' を作成・保存しました。</span>`;
+ } else {
+ response = `<span class="text-amber-300">使用法: txt &lt;ファイル名&gt; [テキスト内容]</span>`;
+ }
+ break;
 
-        case 'sysinfo':
-          response = `
+ case 'open':
+ if (args[0]) {
+ const content = getFileContent(args[0]);
+ if (content !== null) {
+ openInEditor(args[0]);
+ response = `<span class="text-emerald-400">'${args[0]}' をエディタで開きました。</span>`;
+ } else {
+ response = `<span class="text-rose-400">ファイルが見つかりません: ${args[0]}</span>`;
+ }
+ } else {
+ response = `<span class="text-amber-300">使用法: open &lt;ファイル名&gt;</span>`;
+ }
+ break;
+
+ case 'find':
+ if (args[0]) {
+ const query = args[0].toLowerCase();
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.content) {
+ const matched = Object.keys(dir.content).filter(name => name.toLowerCase().includes(query));
+ response = matched.length > 0 
+ ? `<span class="text-emerald-400">検索結果 (${matched.length}件):</span>\n ` + matched.join('\n ')
+ : `<span class="text-slate-400">キーワード '${args[0]}' に該当する項目はありません。</span>`;
+ }
+ } else {
+ response = `<span class="text-amber-300">使用法: find &lt;検索キーワード&gt;</span>`;
+ }
+ break;
+
+ case 'sysinfo':
+ response = `
 <span class="text-cyan-300 font-mono font-bold">=== PenguinOS System Info ===</span>
 OS Version: PenguinOS v4.5 Cloud Web OS
 Kernel: 6.8.0-supabase-rest
@@ -1731,200 +1884,200 @@ VFS Path: ${currentPath}
 Database: Connected (Supabase PostgreSQL)
 Browser: ${navigator.userAgent.slice(0, 45)}...
 `;
-          break;
+ break;
 
-        case 'whoami':
-          response = activeLoggedInUser || 'guest';
-          break;
+ case 'whoami':
+ response = activeLoggedInUser || 'guest';
+ break;
 
-        case 'date':
-          response = new Date().toString();
-          break;
+ case 'date':
+ response = new Date().toString();
+ break;
 
-        case 'history':
-          response = cmdHistory.map((c, i) => ` ${i + 1}  ${c}`).join('\n');
-          break;
+ case 'history':
+ response = cmdHistory.map((c, i) => ` ${i + 1} ${c}`).join('\n');
+ break;
 
-        case 'echo':
-          response = args.join(' ');
-          break;
+ case 'echo':
+ response = args.join(' ');
+ break;
 
-        case 'theme':
-          if (args[0]) {
-            setWallpaper(`wp-${args[0]}`);
-            response = `壁紙テーマを wp-${args[0]} に設定しました。`;
-          } else {
-            response = '使用法: theme [emerald|cyberpunk|midnight|sunset|neon|aurora]';
-          }
-          break;
+ case 'theme':
+ if (args[0]) {
+ setWallpaper(`wp-${args[0]}`);
+ response = `壁紙テーマを wp-${args[0]} に設定しました。`;
+ } else {
+ response = '使用法: theme [emerald|cyberpunk|midnight|sunset|neon|aurora]';
+ }
+ break;
 
-        case 'ls':
-          const dir = getDirectoryNode(currentPath);
-          if (dir && dir.content) {
-            const items = Object.keys(dir.content).map(name => {
-              const item = dir.content[name];
-              return item.type === 'dir' ? `<span class="text-blue-400 font-bold">${name}/</span>` : `<span class="text-slate-200">${name}</span>`;
-            });
-            response = items.length > 0 ? items.join('   ') : '<span class="text-slate-500">(空のディレクトリ)</span>';
-          }
-          break;
+ case 'ls':
+ const dir = getDirectoryNode(currentPath);
+ if (dir && dir.content) {
+ const items = Object.keys(dir.content).map(name => {
+ const item = dir.content[name];
+ return item.type === 'dir' ? `<span class="text-blue-400 font-bold">${name}/</span>` : `<span class="text-slate-200">${name}</span>`;
+ });
+ response = items.length > 0 ? items.join(' ') : '<span class="text-slate-500">(空のディレクトリ)</span>';
+ }
+ break;
 
-        case 'mkdir':
-          if (args[0]) {
-            createNewFolder(args[0]);
-            response = `ディレクトリ '${args[0]}' を作成しました。`;
-          }
-          break;
+ case 'mkdir':
+ if (args[0]) {
+ createNewFolder(args[0]);
+ response = `ディレクトリ '${args[0]}' を作成しました。`;
+ }
+ break;
 
-        case 'touch':
-          if (args[0]) {
-            setFileContent(args[0], "");
-            response = `ファイル '${args[0]}' を作成しました。`;
-          }
-          break;
+ case 'touch':
+ if (args[0]) {
+ setFileContent(args[0], "");
+ response = `ファイル '${args[0]}' を作成しました。`;
+ }
+ break;
 
-        case 'rm':
-          if (args[0]) {
-            if (deleteVFSItem(args[0])) {
-              response = `'${args[0]}' を削除しました。`;
-            } else {
-              response = `<span class="text-rose-400">rm: ${args[0]}: ファイルまたはフォルダが見つかりません</span>`;
-            }
-          }
-          break;
+ case 'rm':
+ if (args[0]) {
+ if (deleteVFSItem(args[0])) {
+ response = `'${args[0]}' を削除しました。`;
+ } else {
+ response = `<span class="text-rose-400">rm: ${args[0]}: ファイルまたはフォルダが見つかりません</span>`;
+ }
+ }
+ break;
 
-        case 'cd':
-          const targetDir = args[0] || `/home/${activeLoggedInUser || 'user'}`;
-          if (!navigateDir(targetDir)) {
-            response = `<span class="text-rose-400">cd: ${targetDir}: 存在しないディレクトリです</span>`;
-          }
-          break;
+ case 'cd':
+ const targetDir = args[0] || `/home/${activeLoggedInUser || 'user'}`;
+ if (!navigateDir(targetDir)) {
+ response = `<span class="text-rose-400">cd: ${targetDir}: 存在しないディレクトリです</span>`;
+ }
+ break;
 
-        case 'pwd':
-          response = currentPath;
-          break;
+ case 'pwd':
+ response = currentPath;
+ break;
 
-        case 'js':
-          try {
-            const res = eval(args.join(' '));
-            response = `<span class="text-emerald-400">&gt; ${res}</span>`;
-          } catch(e) {
-            response = `<span class="text-rose-400">Error: ${e.message}</span>`;
-          }
-          break;
+ case 'js':
+ try {
+ const res = eval(args.join(' '));
+ response = `<span class="text-emerald-400">&gt; ${res}</span>`;
+ } catch(e) {
+ response = `<span class="text-rose-400">Error: ${e.message}</span>`;
+ }
+ break;
 
-        case 'calc':
-          try {
-            const res = eval(args.join(''));
-            response = `<span class="text-teal-300">= ${res}</span>`;
-          } catch(e) {
-            response = `<span class="text-rose-400">Invalid expression</span>`;
-          }
-          break;
+ case 'calc':
+ try {
+ const res = eval(args.join(''));
+ response = `<span class="text-teal-300">= ${res}</span>`;
+ } catch(e) {
+ response = `<span class="text-rose-400">Invalid expression</span>`;
+ }
+ break;
 
-        case 'clear':
-          output.innerHTML = '';
-          return;
+ case 'clear':
+ output.innerHTML = '';
+ return;
 
-        case 'neofetch':
-          response = `
+ case 'neofetch':
+ response = `
 <span class="text-emerald-400 font-bold font-mono">
-       .-.          User: ${activeLoggedInUser}@penguin-pc
-      /   \\         ----------------
-     | O.O |        OS: PenguinOS v4.5 Cloud Edition
-     |  \\b |        Kernel: 6.8.0-supabase
-    / /   \\ \\       Desktop: Multi-User Web Shell
-   / /     \\ \\      Text Engine: Integrated Plain Text / Code
-  ( (       ) )     Storage: Supabase PostgreSQL JSONB
+ .-. User: ${activeLoggedInUser}@penguin-pc
+ / \\ ----------------
+ | O.O | OS: PenguinOS v4.5 Cloud Edition
+ | \\b | Kernel: 6.8.0-supabase
+ / / \\ \\ Desktop: Multi-User Web Shell
+ / / \\ \\ Text Engine: Integrated Plain Text / Code
+ ( ( ) ) Storage: Supabase PostgreSQL JSONB
 </span>`;
-          break;
+ break;
 
-        case 'cat':
-          if (args[0]) {
-            const content = getFileContent(args[0]);
-            response = content !== null ? escapeHtml(content) : `<span class="text-rose-400">ファイルが存在しません: ${args[0]}</span>`;
-          }
-          break;
+ case 'cat':
+ if (args[0]) {
+ const content = getFileContent(args[0]);
+ response = content !== null ? escapeHtml(content) : `<span class="text-rose-400">ファイルが存在しません: ${args[0]}</span>`;
+ }
+ break;
 
-        default:
-          response = `<span class="text-rose-400">コマンドが見つかりません: ${mainCmd} ('help' を入力)</span>`;
-      }
+ default:
+ response = `<span class="text-rose-400">コマンドが見つかりません: ${mainCmd} ('help' を入力)</span>`;
+ }
 
-      if (response) output.innerHTML += `<div>${response}</div>`;
-      const termBody = document.getElementById('terminal-body');
-      termBody.scrollTop = termBody.scrollHeight;
-    }
+ if (response) output.innerHTML += `<div>${response}</div>`;
+ const termBody = document.getElementById('terminal-body');
+ termBody.scrollTop = termBody.scrollHeight;
+ }
 
-    function renderFileManager() {
-      const grid = document.getElementById('file-grid');
-      if (!grid) return;
+ function renderFileManager() {
+ const grid = document.getElementById('file-grid');
+ if (!grid) return;
 
-      grid.innerHTML = '';
-      const dir = getDirectoryNode(currentPath);
+ grid.innerHTML = '';
+ const dir = getDirectoryNode(currentPath);
 
-      const pathDisplay = document.getElementById('file-current-path');
-      if (pathDisplay) pathDisplay.innerText = currentPath;
+ const pathDisplay = document.getElementById('file-current-path');
+ if (pathDisplay) pathDisplay.innerText = currentPath;
 
-      if (!dir || !dir.content) return;
+ if (!dir || !dir.content) return;
 
-      Object.keys(dir.content).forEach(itemName => {
-        const item = dir.content[itemName];
-        const isDir = item.type === 'dir';
+ Object.keys(dir.content).forEach(itemName => {
+ const item = dir.content[itemName];
+ const isDir = item.type === 'dir';
 
-        const card = document.createElement('div');
-        card.className = "group relative bg-slate-900/80 hover:bg-slate-800 p-3 rounded-xl border border-slate-800 hover:border-slate-700 flex flex-col items-center justify-between cursor-pointer transition shadow hover:shadow-lg";
+ const card = document.createElement('div');
+ card.className = "group relative bg-slate-900/80 hover:bg-slate-800 p-3 rounded-xl border border-slate-800 hover:border-slate-700 flex flex-col items-center justify-between cursor-pointer transition shadow hover:shadow-lg";
 
-        const iconHtml = isDir 
-          ? `<i data-lucide="folder" class="w-10 h-10 text-amber-400 mb-2"></i>`
-          : `<i data-lucide="file-text" class="w-10 h-10 text-blue-400 mb-2"></i>`;
+ const iconHtml = isDir 
+ ? `<i data-lucide="folder" class="w-10 h-10 text-amber-400 mb-2"></i>`
+ : `<i data-lucide="file-text" class="w-10 h-10 text-blue-400 mb-2"></i>`;
 
-        card.innerHTML = `
-          <div class="flex flex-col items-center w-full" onclick="${isDir ? `navigateDir('${itemName}')` : `openInEditor('${itemName}')`}">
-            ${iconHtml}
-            <span class="text-xs text-slate-200 font-medium truncate w-full text-center">${itemName}</span>
-          </div>
-          <div class="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition">
-            <button onclick="renameVFSItem('${itemName}')" class="p-1 hover:bg-slate-700 text-slate-300 rounded" title="リネーム"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-            <button onclick="deleteVFSItem('${itemName}')" class="p-1 hover:bg-rose-950 text-rose-400 rounded" title="削除"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-          </div>
-        `;
+ card.innerHTML = `
+ <div class="flex flex-col items-center w-full" onclick="${isDir ? `navigateDir('${itemName}')` : `openInEditor('${itemName}')`}">
+ ${iconHtml}
+ <span class="text-xs text-slate-200 font-medium truncate w-full text-center">${itemName}</span>
+ </div>
+ <div class="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition">
+ <button onclick="renameVFSItem('${itemName}')" class="p-1 hover:bg-slate-700 text-slate-300 rounded" title="リネーム"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+ <button onclick="deleteVFSItem('${itemName}')" class="p-1 hover:bg-rose-950 text-rose-400 rounded" title="削除"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+ </div>
+ `;
 
-        grid.appendChild(card);
-      });
+ grid.appendChild(card);
+ });
 
-      lucide.createIcons();
-    }
+ lucide.createIcons();
+ }
 
-    function promptCreateFile() {
-      showInputModal("新規ファイル作成", "ファイル名を入力してください (例: note.txt):", (filename) => {
-        if (filename) {
-          const fname = filename.includes('.') ? filename : filename + '.txt';
-          setFileContent(fname, "");
-          openInEditor(fname);
-          showToast(`ファイル '${fname}' を作成しました`, 'success');
-        }
-      });
-    }
+ function promptCreateFile() {
+ showInputModal("新規ファイル作成", "ファイル名を入力してください (例: note.txt):", (filename) => {
+ if (filename) {
+ const fname = filename.includes('.') ? filename : filename + '.txt';
+ setFileContent(fname, "");
+ openInEditor(fname);
+ showToast(`ファイル '${fname}' を作成しました`, 'success');
+ }
+ });
+ }
 
-    function promptCreateFolder() {
-      showInputModal("新規フォルダ作成", "フォルダ名を入力してください:", (folderName) => {
-        if (folderName) {
-          createNewFolder(folderName);
-          showToast(`フォルダ '${folderName}' を作成しました`, 'success');
-        }
-      });
-    }
+ function promptCreateFolder() {
+ showInputModal("新規フォルダ作成", "フォルダ名を入力してください:", (folderName) => {
+ if (folderName) {
+ createNewFolder(folderName);
+ showToast(`フォルダ '${folderName}' を作成しました`, 'success');
+ }
+ });
+ }
 
-    function openInEditor(filename) {
-      const content = getFileContent(filename);
-      if (content !== null) {
-        openApp('texteditor');
-        document.getElementById('editor-filename').value = filename;
-        document.getElementById('editor-textarea').value = content;
-        document.getElementById('editor-title').innerText = `テキスト / コード エディタ - ${filename}`;
-        document.getElementById('editor-status').innerText = `読み込み完了: ${filename}`;
-      }
-    }
-  </script>
+ function openInEditor(filename) {
+ const content = getFileContent(filename);
+ if (content !== null) {
+ openApp('texteditor');
+ document.getElementById('editor-filename').value = filename;
+ document.getElementById('editor-textarea').value = content;
+ document.getElementById('editor-title').innerText = `テキスト / コード エディタ - ${filename}`;
+ document.getElementById('editor-status').innerText = `読み込み完了: ${filename}`;
+ }
+ }
+ </script>
 </body>
 </html>
